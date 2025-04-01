@@ -1,5 +1,6 @@
 package com.clouddy.application.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +23,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,12 +35,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.clouddy.application.R
+import com.clouddy.application.ui.viewModel.AuthState
+import com.clouddy.application.ui.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 import com.example.clouddy.ui.theme.HoltwoodOneSC
 import com.example.clouddy.ui.theme.Iceland
@@ -45,10 +49,23 @@ import com.example.clouddy.ui.theme.LoginColor
 
 
 @Composable
-fun LoginScreen(navigateToRegistro: () -> Unit ) {
+fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authVM: AuthVM) {
     ClouddyTheme {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+
+        val authState = authVM.authState.observeAsState()
+        val context = LocalContext.current
+
+        LaunchedEffect(authState.value) {
+            when (authState.value) {
+                is AuthState.Authenticated -> navigateHome()
+                is AuthState.Error -> {
+                    Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_SHORT).show()
+                }
+                else -> Unit
+            }
+        }
 
         Scaffold(
             content = { paddingValues ->
@@ -203,7 +220,7 @@ fun LoginScreen(navigateToRegistro: () -> Unit ) {
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(20.dp),
-                                onClick = {/*Handle*/ },
+                                onClick = {  authVM.login(email, password) },
                                 shape = RoundedCornerShape(30.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = LoginColor),
                                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
