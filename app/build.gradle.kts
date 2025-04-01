@@ -3,14 +3,18 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+
+    //Firebase
+    id("com.google.gms.google-services")
+
 }
 
 android {
-    namespace = "com.example.clouddy"
+    namespace = "com.clouddy.application"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.clouddy"
+        applicationId = "com.clouddy.application"
         minSdk = 29
         targetSdk = 35
         versionCode = 1
@@ -41,9 +45,15 @@ android {
 }
 
 dependencies {
-
+    //Navegation
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+
+    //Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "532315287732",
+    "project_id": "clouddy-9ddbb",
+    "storage_bucket": "clouddy-9ddbb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:532315287732:android:a7378baf5b1e0c7d1d67e1",
+        "android_client_info": {
+          "package_name": "com.clouddy.application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBx14OqrGfDV5gU22Lx3TH8wLXPgbDcpPU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

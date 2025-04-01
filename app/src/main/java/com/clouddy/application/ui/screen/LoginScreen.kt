@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.clouddy.R
+import com.clouddy.application.R
 import com.example.clouddy.ui.theme.ClouddyTheme
 import com.example.clouddy.ui.theme.HoltwoodOneSC
 import com.example.clouddy.ui.theme.Iceland
