@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen
+package com.clouddy.application.ui.screen.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box

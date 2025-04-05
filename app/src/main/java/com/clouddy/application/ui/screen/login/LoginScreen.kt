@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen
+package com.clouddy.application.ui.screen.login
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -101,14 +101,38 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authV
                                 .offset(y = 185.dp)
                         )
 
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_central, modifier = Modifier.height(180.dp).offset(y = 20.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_5c, modifier = Modifier.height(150.dp).offset(x = (-120).dp, y = 165.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_6r, modifier = Modifier.height(165.dp).offset(x = 130.dp, y = 170.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_6c, modifier = Modifier.height(150.dp).offset(x = (-135).dp, y = 295.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_6r, modifier = Modifier.height(165.dp).offset(x = 145.dp, y = 330.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_6c, modifier = Modifier.height(165.dp).offset(x = (-130).dp, y = 440.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_5c, modifier = Modifier.height(155.dp).offset(x = 110.dp, y = 500.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.nuben_6c, modifier = Modifier.height(145.dp).offset(x = (-110).dp, y = 590.dp))
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_central,
+                            modifier = Modifier.height(180.dp).offset(y = 20.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_5c,
+                            modifier = Modifier.height(150.dp).offset(x = (-120).dp, y = 165.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_6r,
+                            modifier = Modifier.height(165.dp).offset(x = 130.dp, y = 170.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_6c,
+                            modifier = Modifier.height(150.dp).offset(x = (-135).dp, y = 295.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_6r,
+                            modifier = Modifier.height(165.dp).offset(x = 145.dp, y = 330.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_6c,
+                            modifier = Modifier.height(165.dp).offset(x = (-130).dp, y = 440.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_5c,
+                            modifier = Modifier.height(155.dp).offset(x = 110.dp, y = 500.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.nuben_6c,
+                            modifier = Modifier.height(145.dp).offset(x = (-110).dp, y = 590.dp)
+                        )
 
                         Image(
                             painter = painterResource(id = R.drawable.livro1),
@@ -239,7 +263,7 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authV
                                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
                                 contentPadding = PaddingValues(16.dp)
                             ) {
-                                Text("REGISTRARSE", color = Color.Black, fontFamily = Iceland, fontSize = 20.sp)
+                                Text("REGISTRARSE", color = Color.Black, fontFamily = Iceland, fontSize = 18.sp)
                             }
                         }
 

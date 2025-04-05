@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen
+package com.clouddy.application.ui.screen.login
 
 
 import android.widget.Toast
@@ -91,14 +91,38 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authV
                             .fillMaxSize()
 
                     ) {
-                        CloudImageWithShadow(imageRes = R.drawable.img1, modifier = Modifier.offset(x = (-100).dp, y = (-150).dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img2, modifier = Modifier.offset(x = 100.dp, y = (-55).dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img1, modifier = Modifier.offset(x = (-100).dp, y = 65.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img2, modifier = Modifier.offset(x = 110.dp, y = 165.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img1, modifier = Modifier.offset(x = (-110).dp, y = 285.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img2, modifier = Modifier.offset(x = 90.dp, y = 395.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img1, modifier = Modifier.offset(x = (-80).dp, y = 515.dp))
-                        CloudImageWithShadow(imageRes = R.drawable.img2, modifier = Modifier.offset(x = 105.dp, y = 600.dp))
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img1,
+                            modifier = Modifier.offset(x = (-100).dp, y = (-150).dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img2,
+                            modifier = Modifier.offset(x = 100.dp, y = (-55).dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img1,
+                            modifier = Modifier.offset(x = (-100).dp, y = 65.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img2,
+                            modifier = Modifier.offset(x = 110.dp, y = 165.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img1,
+                            modifier = Modifier.offset(x = (-110).dp, y = 285.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img2,
+                            modifier = Modifier.offset(x = 90.dp, y = 395.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img1,
+                            modifier = Modifier.offset(x = (-80).dp, y = 515.dp)
+                        )
+                        CloudImageWithShadow(
+                            imageRes = R.drawable.img2,
+                            modifier = Modifier.offset(x = 105.dp, y = 600.dp)
+                        )
 
                         Box(modifier = Modifier
                             .fillMaxSize()
