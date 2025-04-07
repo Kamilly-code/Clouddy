@@ -32,19 +32,21 @@ import com.example.clouddy.ui.theme.ClouddyTheme
 import com.example.clouddy.ui.theme.LoginColor
 import androidx.compose.foundation.lazy.items
 import com.clouddy.application.database.entity.Note
+import com.clouddy.application.toNoteItem
 
 
 @Composable
 fun SearchBar(
-    notesList: List<NoteItem>,
+    notesList: List<Note>,
     navigateToAddNote: () -> Unit,
-    onNoteClicked: (NoteItem) -> Unit
+    onNoteClicked: (Note) -> Unit
 ) {
     ClouddyTheme {
         var query by remember { mutableStateOf("") }
 
         val filteredNotes = notesList.filter {
-            it.title.contains(query, ignoreCase = true) || it.note.contains(query, ignoreCase = true)
+            it.title.orEmpty().contains(query, ignoreCase = true) ||
+                    it.note.orEmpty().contains(query, ignoreCase = true)
         }
 
         Scaffold(
@@ -72,9 +74,11 @@ fun SearchBar(
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
                         modifier = Modifier.fillMaxWidth()
                     )
+
                     LazyColumn {
                         items(filteredNotes) { note ->
-                            NoteItemView(note = note, onClick = { onNoteClicked(note) })
+                            val noteItem = note.toNoteItem()
+                            NoteItemView(noteItem = noteItem, onClick = { onNoteClicked(note) })
                         }
                     }
                 }

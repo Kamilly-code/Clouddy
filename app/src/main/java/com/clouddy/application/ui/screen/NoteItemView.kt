@@ -18,7 +18,7 @@ import com.clouddy.application.database.entity.Note
 
 @Composable
 fun NoteItemView(
-    note: NoteItem,
+    noteItem: NoteItem,
     onClick: () -> Unit
 ) {
     Box(
@@ -29,9 +29,9 @@ fun NoteItemView(
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = note.title, color = Color.Black)
-            Text(text = note.note, color = Color.Gray)
-            Text(text = note.date, color = Color.LightGray)
+            Text(text = noteItem.title, color = Color.Black)
+            Text(text = noteItem.note, color = Color.Gray)
+            Text(text = noteItem.date, color = Color.LightGray)
         }
     }
 }

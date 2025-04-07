@@ -27,6 +27,8 @@ lifecycleRuntimeCompose = "2.8.7"
 navegationCompose = "2.8.9"
 runtimeLivedata = "1.7.8"
 lifecycleRuntimeKtx = "2.8.7"
+# VerticalGrid
+composeFoundation = "1.7.8"
 
 # Serialization
 kotlinxSerialization = "1.8.1"
@@ -42,6 +44,8 @@ hilt = "2.55"
 # Kotlin Symbol Processing (KSP)
 ksp = "2.0.0-1.0.21"
 taptargetview = "1.13.3"
+
+
 
 
 [libraries]
@@ -76,7 +80,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
 idx-compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended" }
 taptargetview = { module = "com.getkeepsafe.taptargetview:taptargetview", version.ref = "taptargetview" }
-
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "composeFoundation" }
 
 # KotlinX
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }

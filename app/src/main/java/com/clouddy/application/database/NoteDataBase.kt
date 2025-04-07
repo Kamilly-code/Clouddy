@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.clouddy.application.database.entity.Note
 import com.clouddy.application.utilities.DATABASE_NAME
 
-@Database(entities = arrayOf(Note::class), version = 1, exportSchema = false)
+@Database(entities = [Note::class], version = 1, exportSchema = false)
 abstract class NoteDataBase : RoomDatabase() {
 
     abstract fun getNoteDao() : NoteDao

@@ -1,13 +1,16 @@
 package com.clouddy.application.ui.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -20,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,11 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.clouddy.application.NoteItem
+import com.clouddy.application.R
 import com.clouddy.application.database.entity.Note
 import com.clouddy.application.viewModel.NotesViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
@@ -74,7 +81,10 @@ fun AddNote(
 
                         IconButton(onClick = {
                             if (title.isNotBlank() && content.isNotBlank()) {
-                                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                                val currentDate = SimpleDateFormat(
+                                    "dd/MM/yyyy",
+                                    Locale.getDefault()
+                                ).format(Date())
                                 val newNote = Note(
                                     id = noteToEdit?.id,
                                     title = title,
@@ -96,20 +106,43 @@ fun AddNote(
                 )
             }
         ) { padding ->
-            Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-                TextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Título") },
-                    modifier = Modifier.fillMaxWidth()
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = painterResource(id = R.drawable.plants),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = content,
-                    onValueChange = { content = it },
-                    label = { Text("Nota") },
-                    modifier = Modifier.fillMaxSize()
-                )
+                Column(
+                    modifier = Modifier
+                        .padding(padding)
+                        .padding(16.dp)
+                ) {
+                    TextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Título") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White.copy(alpha = 0.7f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.5f),
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = Color.Black
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinedTextField(
+                        value = content,
+                        onValueChange = { content = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(Color.White.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                    )
+
+
+                }
             }
         }
     }

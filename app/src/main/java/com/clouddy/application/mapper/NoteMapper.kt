@@ -4,6 +4,7 @@ package com.clouddy.application.mapper
 import com.clouddy.application.NoteItem
 import com.clouddy.application.database.entity.Note
 
+
 fun Note.toNoteItem(): NoteItem {
     return NoteItem(
         title = this.title.orEmpty(),
