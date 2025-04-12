@@ -1,7 +1,9 @@
 package com.clouddy.application.ui.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,9 +35,14 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.clouddy.application.R
 import com.clouddy.application.mapper.toNoteItem
 import com.example.clouddy.ui.theme.LoginColor
+import kotlin.text.get
 
 @Composable
 fun NotesListScreen(
@@ -49,48 +56,69 @@ fun NotesListScreen(
     val filteredNotes = notes.filter {
         (it.title ?: "").contains(query, ignoreCase = true) || (it.note ?: "").contains(query, ignoreCase = true)
     }
+
     ClouddyTheme {
         Scaffold(
-            floatingActionButton = {
-                FloatingActionButton(onClick = onAddNewNote, shape = RoundedCornerShape(50.dp), containerColor = LoginColor) {
-                    Icon(Icons.Default.Add, contentDescription = "Add")
-                }
-            },
-            containerColor = LoginColor
-        ) { padding ->
-            Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-                TextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text("Buscar...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.LightGray,
-                        unfocusedContainerColor = Color.LightGray,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                )
+            content = { padding ->
+                Box(modifier = Modifier.fillMaxSize()) {
 
-                LazyVerticalStaggeredGrid(
-                    columns = StaggeredGridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    verticalItemSpacing = 2.dp,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    items(filteredNotes.size) { index ->
-                        val note = filteredNotes[index]
-                        val noteItem = note.toNoteItem()
-                        NoteItemView(noteItem, onClick = { onNoteClicked(note) })
+                    Image(
+                        painter = painterResource(id = R.drawable.plants3),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(16.dp)
+                    ) {
+
+                        TextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            label = { Text("Buscar...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.LightGray.copy(alpha = 0.8f),
+                                unfocusedContainerColor = Color.LightGray.copy(alpha = 0.8f),
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+
+                        LazyVerticalStaggeredGrid(
+                            columns = StaggeredGridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp),
+                            verticalItemSpacing = 2.dp,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            items(filteredNotes.size) { index ->
+                                val note = filteredNotes[index]
+                                val noteItem = note.toNoteItem()
+                                NoteItemView(noteItem, onClick = { onNoteClicked(note) })
+                            }
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        CloudFABImage(
+                            onClick = onAddNewNote
+                        )
                     }
                 }
-
-
             }
-        }
+        )
     }
 }

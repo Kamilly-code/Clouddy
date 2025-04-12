@@ -50,16 +50,6 @@ fun SearchBar(
         }
 
         Scaffold(
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { navigateToAddNote() },
-                    modifier = Modifier.padding(16.dp),
-                    shape = RoundedCornerShape(50.dp),
-                    containerColor = LoginColor
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Adicionar")
-                }
-            },
             content = { paddingValues ->
                 Column(
                     modifier = Modifier

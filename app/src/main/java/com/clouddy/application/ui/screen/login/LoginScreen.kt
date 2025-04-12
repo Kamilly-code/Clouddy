@@ -102,35 +102,35 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authV
                         )
 
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_central,
+                            imageRes = R.drawable.nube_central,
                             modifier = Modifier.height(180.dp).offset(y = 20.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_5c,
+                            imageRes = R.drawable.nube_5c,
                             modifier = Modifier.height(150.dp).offset(x = (-120).dp, y = 165.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_6r,
+                            imageRes = R.drawable.nube_6r,
                             modifier = Modifier.height(165.dp).offset(x = 130.dp, y = 170.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_6c,
+                            imageRes = R.drawable.nube_6c,
                             modifier = Modifier.height(150.dp).offset(x = (-135).dp, y = 295.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_6r,
+                            imageRes = R.drawable.nube_6r,
                             modifier = Modifier.height(165.dp).offset(x = 145.dp, y = 330.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_6c,
+                            imageRes = R.drawable.nube_6c,
                             modifier = Modifier.height(165.dp).offset(x = (-130).dp, y = 440.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_5c,
+                            imageRes = R.drawable.nube_5c,
                             modifier = Modifier.height(155.dp).offset(x = 110.dp, y = 500.dp)
                         )
                         CloudImageWithShadow(
-                            imageRes = R.drawable.nuben_6c,
+                            imageRes = R.drawable.nube_6c,
                             modifier = Modifier.height(145.dp).offset(x = (-110).dp, y = 590.dp)
                         )
 

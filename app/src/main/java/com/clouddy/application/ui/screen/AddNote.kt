@@ -108,7 +108,7 @@ fun AddNote(
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize()) {
                 Image(
-                    painter = painterResource(id = R.drawable.plants),
+                    painter = painterResource(id = R.drawable.plants4),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
