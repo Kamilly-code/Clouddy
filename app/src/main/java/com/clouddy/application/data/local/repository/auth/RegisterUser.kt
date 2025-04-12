@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.viewModel
+package com.clouddy.application.data.local.repository.auth
 
 import com.google.firebase.auth.FirebaseAuth
 

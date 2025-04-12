@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen.login
+package com.clouddy.application.ui.screen.login.screen
 
 
 import android.widget.Toast
@@ -37,8 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.clouddy.application.R
-import com.clouddy.application.ui.viewModel.AuthState
-import com.clouddy.application.ui.viewModel.AuthVM
+import com.clouddy.application.ui.screen.login.components.CloudImageWithShadow
+import com.clouddy.application.ui.screen.login.viewModel.AuthState
+import com.clouddy.application.ui.screen.login.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 import com.example.clouddy.ui.theme.HoltwoodOneSC
 import com.example.clouddy.ui.theme.Iceland

@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen
+package com.clouddy.application.ui.screen.notes.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box

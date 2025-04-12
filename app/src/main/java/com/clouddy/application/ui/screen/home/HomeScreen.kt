@@ -16,8 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.clouddy.application.ui.viewModel.AuthState
-import com.clouddy.application.ui.viewModel.AuthVM
+import com.clouddy.application.ui.screen.login.viewModel.AuthState
+import com.clouddy.application.ui.screen.login.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 
 @Composable

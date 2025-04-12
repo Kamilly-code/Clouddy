@@ -1,7 +1,8 @@
-package com.clouddy.application.database
+package com.clouddy.application.data.local.repository
 
 import androidx.lifecycle.LiveData
-import com.clouddy.application.database.entity.Note
+import com.clouddy.application.data.local.dao.NoteDao
+import com.clouddy.application.data.local.entity.Note
 
 class NotesRepository(private val noteDao: NoteDao) {
     val allNotes : LiveData<List<Note>> = noteDao.getAllNotes()

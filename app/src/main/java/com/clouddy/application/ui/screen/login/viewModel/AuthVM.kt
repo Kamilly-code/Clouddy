@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.viewModel
+package com.clouddy.application.ui.screen.login.viewModel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

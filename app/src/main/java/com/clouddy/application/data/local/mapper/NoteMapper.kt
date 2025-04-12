@@ -1,8 +1,8 @@
-package com.clouddy.application.mapper
+package com.clouddy.application.data.local.mapper
 
 
-import com.clouddy.application.NoteItem
-import com.clouddy.application.database.entity.Note
+import com.clouddy.application.domain.model.NoteItem
+import com.clouddy.application.data.local.entity.Note
 
 
 fun Note.toNoteItem(): NoteItem {

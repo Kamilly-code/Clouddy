@@ -1,19 +1,19 @@
-package com.clouddy.application.viewModel
+package com.clouddy.application.ui.screen.notes.viewModel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.clouddy.application.NoteItem
-import com.clouddy.application.database.NoteDataBase
-import com.clouddy.application.database.NotesRepository
-import com.clouddy.application.database.entity.Note
-import com.clouddy.application.mapper.toNoteItem
+import com.clouddy.application.data.local.db.NoteDataBase
+import com.clouddy.application.data.local.entity.Note
+import com.clouddy.application.data.local.mapper.toNoteItem
+import com.clouddy.application.data.local.repository.NotesRepository
+import com.clouddy.application.domain.model.NoteItem
 import kotlinx.coroutines.launch
 
 class NotesViewModel (application: Application) : AndroidViewModel(application) {
-    private val noteDao = NoteDataBase.getDataBase(application).getNoteDao()
+    private val noteDao = NoteDataBase.Companion.getDataBase(application).getNoteDao()
     private val repository = NotesRepository(noteDao)
     val notes: LiveData<List<NoteItem>> = repository.allNotes.map { list ->
         list.map { it.toNoteItem() }
