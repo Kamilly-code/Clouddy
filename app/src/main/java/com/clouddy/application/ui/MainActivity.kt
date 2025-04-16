@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.clouddy.application.ui.screen.notes.NotesApp
+import com.clouddy.application.ui.screen.toDo.screen.TaskScreen
 import com.example.clouddy.ui.theme.ClouddyTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +15,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ClouddyTheme {
-                NotesApp()
+               // NotesApp()
+                TaskScreen()
             }
         }
     }
