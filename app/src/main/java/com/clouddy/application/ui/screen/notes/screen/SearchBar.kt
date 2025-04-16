@@ -69,11 +69,6 @@ fun SearchBar(
     }
 }
 
-@Preview
-@Composable
-fun NotesAppPreview() {
-    NotesApp()
-}
 
 
 

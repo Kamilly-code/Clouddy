@@ -10,3 +10,6 @@ object Registro
 
 @Serializable
 object Home
+
+@Serializable
+object Notes

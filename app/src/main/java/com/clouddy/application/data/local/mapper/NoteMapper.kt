@@ -13,11 +13,3 @@ fun Note.toNoteItem(): NoteItem {
     )
 }
 
-fun NoteItem.toNote(id: Int? = null): Note {
-    return Note(
-        id = id,
-        title = this.title,
-        note = this.note,
-        date = this.date
-    )
-}

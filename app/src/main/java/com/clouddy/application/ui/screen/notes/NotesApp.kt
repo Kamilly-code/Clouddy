@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.clouddy.application.data.local.entity.Note
 import com.clouddy.application.ui.screen.notes.screen.AddNote
@@ -13,7 +14,7 @@ import com.clouddy.application.ui.screen.notes.viewModel.NotesViewModel
 
 
 @Composable
-fun NotesApp(viewModel: NotesViewModel = viewModel()) {
+fun NotesApp(viewModel: NotesViewModel = hiltViewModel()) {
     var selectedNote by remember { mutableStateOf<Note?>(null) }
     var isAddingNote by remember { mutableStateOf(false) }
 
@@ -42,4 +43,6 @@ fun NotesApp(viewModel: NotesViewModel = viewModel()) {
         )
     }
 }
+
+
 

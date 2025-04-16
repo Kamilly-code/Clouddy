@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.clouddy.application.core.utils.DATABASE_NAME
+import com.clouddy.application.core.utils.DATABASE_NOTE
 import com.clouddy.application.data.local.dao.NoteDao
 import com.clouddy.application.data.local.entity.Note
 
@@ -22,7 +22,7 @@ abstract class NoteDataBase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     NoteDataBase::class.java,
-                    DATABASE_NAME
+                    DATABASE_NOTE
                 ).build()
                 INSTANCE = instance
                 instance

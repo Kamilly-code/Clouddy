@@ -3,6 +3,7 @@ package com.clouddy.application.ui.screen.notes.viewModel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.clouddy.application.data.local.db.NoteDataBase
@@ -10,11 +11,13 @@ import com.clouddy.application.data.local.entity.Note
 import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.data.local.repository.NotesRepository
 import com.clouddy.application.domain.model.NoteItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NotesViewModel (application: Application) : AndroidViewModel(application) {
-    private val noteDao = NoteDataBase.Companion.getDataBase(application).getNoteDao()
-    private val repository = NotesRepository(noteDao)
+@HiltViewModel
+class NotesViewModel @Inject constructor(private val repository: NotesRepository) : ViewModel() {
+
     val notes: LiveData<List<NoteItem>> = repository.allNotes.map { list ->
         list.map { it.toNoteItem() }
     }

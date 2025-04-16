@@ -38,10 +38,11 @@ fun CloudFABImage(
 
         Image(
             painter = painterResource(id = R.drawable.fbnube),
-            contentDescription = "Cloud Floating Action Button",
+            contentDescription = "Botón de acción flotante de nube",
             modifier = Modifier
                 .size(90.dp)
         )
     }
 }
+
 
