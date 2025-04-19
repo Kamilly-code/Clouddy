@@ -86,14 +86,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
         }
     }
 
-    val tareasHechas = remember { mutableStateMapOf<Int, Boolean>() }
 
-    fun estaHecha(taskId: Int) = tareasHechas[taskId] == true
-
-    fun verificandoCambios(taskId: Int) {
-        val estadoActual = tareasHechas[taskId] ?: false
-        tareasHechas[taskId] = !estadoActual
-    }
 
 
 
@@ -152,16 +145,22 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                         Box(
                                             modifier = Modifier
                                                 .size(24.dp)
-                                                .border(2.dp, if (estaHecha(task.id)) Color.Gray else Color.Black,  shape = RoundedCornerShape(4.dp))
+                                                .border(
+                                                    2.dp,
+                                                    if (task.isCompleted) Color.Gray else Color.Black,
+                                                    shape = RoundedCornerShape(4.dp)
+                                                )
                                                 .clip(RoundedCornerShape(4.dp))
                                                 .background(
-                                                    if (estaHecha(task.id)) Color.Gray
+                                                    if (task.isCompleted) Color.Gray
                                                     else Color.Transparent
                                                 )
-                                                .clickable {verificandoCambios(task.id)},
+                                                .clickable {
+                                                    viewModel.storeTaskCompletation(task)
+                                                },
                                             contentAlignment = Alignment.Center
                                         ){
-                                            if (estaHecha(task.id)) {
+                                            if (task.isCompleted) {
                                                 Icon(
                                                     imageVector = Icons.Default.Check,
                                                     contentDescription = "Tarea hecha",
@@ -178,7 +177,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                             modifier = Modifier.weight(1f),
                                             maxLines = 1,
                                             style = MaterialTheme.typography.bodyLarge.copy(
-                                                textDecoration = if (estaHecha(task.id)) TextDecoration.LineThrough else TextDecoration.None
+                                                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                                             )
                                         )
 

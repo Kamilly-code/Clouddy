@@ -6,6 +6,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.clouddy.application.data.local.entity.Task
 import kotlinx.coroutines.flow.Flow
 
@@ -18,6 +19,9 @@ interface TaskDao {
 
     @Delete
     suspend fun delete(task: Task)
+
+    @Query("UPDATE task_table SET isCompleted = :completed WHERE id = :taskId")
+    suspend fun update(taskId: Int, completed: Boolean)
 
     @Query("SELECT * FROM task_table")
     fun getAllTasks(): Flow<List<Task>>

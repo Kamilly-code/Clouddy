@@ -25,4 +25,11 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository)
         }
     }
 
+    fun storeTaskCompletation ( task: Task ) {
+        viewModelScope.launch {
+            val updatedTask = task.copy(isCompleted = !task.isCompleted)
+            repository.update(updatedTask)
+        }
+    }
+
 }
