@@ -9,6 +9,8 @@ import com.clouddy.application.ui.screen.home.HomeScreen
 import com.clouddy.application.ui.screen.login.screen.LoginScreen
 import com.clouddy.application.ui.screen.login.screen.RegistroScreen
 import com.clouddy.application.ui.screen.login.viewModel.AuthVM
+import com.clouddy.application.ui.screen.notes.NotesApp
+import com.clouddy.application.ui.screen.toDo.screen.TaskScreen
 
 @Composable
 fun NavigationWrapper() {
@@ -26,7 +28,9 @@ fun NavigationWrapper() {
             HomeScreen (
                 navigateToLogin = {
                     navController.navigate(Login)},
-                authVM = authVM
+                authVM = authVM,
+                navigateToNotes = { navController.navigate(Notes) },
+                navigateToTask = {  }
             )
         }
 
@@ -38,5 +42,14 @@ fun NavigationWrapper() {
                 authVM = authVM
             )
         }
+
+        composable<Notes> {
+            NotesApp( navigateToTask = {navController.navigate(Task)})
+        }
+
+        composable<Task> {
+            TaskScreen( navigateToNotesScreen = {navController.navigate(Notes)})
+        }
+
     }
 }

@@ -1,5 +1,11 @@
 package com.clouddy.application.ui.screen.toDo.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,11 +15,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,13 +39,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
@@ -43,7 +61,7 @@ import com.example.clouddy.ui.theme.ClouddyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskScreen(){
+fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
     val viewModel: TaskViewModel = hiltViewModel()
     val tasks by viewModel.tasks.observeAsState(emptyList())
 
@@ -52,8 +70,45 @@ fun TaskScreen(){
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
+    val dragOffset = remember { mutableStateOf(0f) } // Offset de arrastre
+    val dragThreshold = 100f // Umbral de arrastre para activar la navegación
+    val hasNavigated = remember { mutableStateOf(false) }
+
+    val dragState = rememberDraggableState { delta ->
+        dragOffset.value += delta
+    }
+
+    //Efecto de la navegacion de arrastre/drag para la derecha
+    LaunchedEffect(dragOffset.value) {
+        if (!hasNavigated.value && dragOffset.value > dragThreshold) {
+            hasNavigated.value = true
+            navigateToNotesScreen?.invoke()
+        }
+    }
+
+    val tareasHechas = remember { mutableStateMapOf<Int, Boolean>() }
+
+    fun estaHecha(taskId: Int) = tareasHechas[taskId] == true
+
+    fun verificandoCambios(taskId: Int) {
+        val estadoActual = tareasHechas[taskId] ?: false
+        tareasHechas[taskId] = !estadoActual
+    }
+
+
+
     ClouddyTheme {
         Scaffold(
+            floatingActionButton = {
+                CloudFABImage(
+                    onClick = { showAddTaskSheet = true },
+                    modifier = Modifier
+                        .padding(end = 16.dp, bottom = 16.dp)
+                        .graphicsLayer {
+                            clip = false
+                        }
+                )
+            },
             content = { paddingValues ->
                 Box(modifier = Modifier.fillMaxSize()) {
                     Column(
@@ -61,15 +116,21 @@ fun TaskScreen(){
                             .fillMaxSize()
                             .padding(paddingValues)
                             .padding(16.dp)
+                            .draggable(
+                                state = dragState,
+                                orientation = Orientation.Horizontal,
+                                onDragStarted = { dragOffset.value = 0f },
+                                onDragStopped = { dragOffset.value = 0f; hasNavigated.value = false }
+                            )
                     ) {
 
                         Text(
-                            text = "Suas Tarefas",
+                            text = "ToDo",
                             style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
 
-                        LazyColumn {
+                        LazyColumn (verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(tasks, key = { it.id }) { task ->
                                 Card(
                                     modifier = Modifier
@@ -88,16 +149,43 @@ fun TaskScreen(){
                                             .fillMaxWidth()
                                             .padding(16.dp)
                                     ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .border(2.dp, if (estaHecha(task.id)) Color.Gray else Color.Black,  shape = RoundedCornerShape(4.dp))
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(
+                                                    if (estaHecha(task.id)) Color.Gray
+                                                    else Color.Transparent
+                                                )
+                                                .clickable {verificandoCambios(task.id)},
+                                            contentAlignment = Alignment.Center
+                                        ){
+                                            if (estaHecha(task.id)) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Tarea hecha",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.width(12.dp))
+
                                         Text(
                                             text = task.task,
                                             modifier = Modifier.weight(1f),
                                             maxLines = 1,
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                textDecoration = if (estaHecha(task.id)) TextDecoration.LineThrough else TextDecoration.None
+                                            )
                                         )
+
                                         IconButton(onClick = { viewModel.removeTask(task) }) {
                                             Icon(
                                                 Icons.Default.Delete,
-                                                contentDescription = "Remover tarefa"
+                                                contentDescription = "Eliminar tareas"
                                             )
                                         }
                                     }
@@ -106,18 +194,7 @@ fun TaskScreen(){
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.BottomEnd
-                    ) {
-                        CloudFABImage(
-                            onClick = { showAddTaskSheet = true }
-                        )
-                    }
 
-                    // Bottom sheet para adicionar nova tarefa
                     if (showAddTaskSheet) {
                         ModalBottomSheet(
                             onDismissRequest = { showAddTaskSheet = false },
@@ -134,7 +211,7 @@ fun TaskScreen(){
                                 TextField(
                                     value = newTaskText,
                                     onValueChange = { newTaskText = it },
-                                    label = { Text("Nova tarefa") },
+                                    label = { Text("Nueva tarea") },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -148,7 +225,7 @@ fun TaskScreen(){
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Adicionar")
+                                    Text("Añadir")
                                 }
                             }
                         }

@@ -1,12 +1,18 @@
 package com.clouddy.application.ui.screen.notes.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -28,20 +34,27 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.clouddy.application.R
 import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.notes.components.NoteItemView
+import kotlin.collections.plusAssign
+import kotlin.compareTo
+import kotlin.text.get
 
 @Composable
 fun NotesListScreen(
     viewModel: NotesViewModel,
     onNoteClicked: (Note) -> Unit,
-    onAddNewNote: () -> Unit
+    onAddNewNote: () -> Unit,
+    navigateToTaskScreen: (() -> Unit)? = null
 ) {
     val notes by viewModel.allNotes.observeAsState(emptyList())
     var query by remember { mutableStateOf("") }
@@ -50,11 +63,47 @@ fun NotesListScreen(
         (it.title ?: "").contains(query, ignoreCase = true) || (it.note ?: "").contains(query, ignoreCase = true)
     }
 
+
+    val dragOffset = remember { mutableStateOf(0f) }
+    val dragThreshold = 100f
+    val hasNavigated = remember { mutableStateOf(false) }
+
+    val dragState = rememberDraggableState { delta ->
+        dragOffset.value += delta
+    }
+
+    // Lógica de navegação
+    LaunchedEffect(dragOffset.value) {
+        if (!hasNavigated.value && dragOffset.value < -dragThreshold) {
+            hasNavigated.value = true
+            navigateToTaskScreen?.invoke()
+        }
+    }
+
     ClouddyTheme {
         Scaffold(
+            floatingActionButton = {
+                CloudFABImage(
+                    onClick = onAddNewNote,
+                    modifier = Modifier
+                        .padding(end = 16.dp, bottom = 16.dp)
+                        .graphicsLayer {
+                            clip = false
+                        }
+                )
+            },
             content = { padding ->
-                Box(modifier = Modifier.fillMaxSize()) {
-
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .draggable(
+                            state = dragState,
+                            orientation = Orientation.Horizontal,
+                            onDragStarted = { dragOffset.value = 0f },
+                            onDragStopped = { dragOffset.value = 0f; hasNavigated.value = false }
+                        )
+                ) {
+                    // Conteúdo da tela
                     Image(
                         painter = painterResource(id = R.drawable.plants3),
                         contentDescription = null,
@@ -68,7 +117,6 @@ fun NotesListScreen(
                             .padding(padding)
                             .padding(16.dp)
                     ) {
-
                         TextField(
                             value = query,
                             onValueChange = { query = it },
@@ -100,16 +148,6 @@ fun NotesListScreen(
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.BottomEnd
-                    ) {
-                        CloudFABImage(
-                            onClick = onAddNewNote
-                        )
-                    }
                 }
             }
         )

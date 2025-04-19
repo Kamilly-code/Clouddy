@@ -45,7 +45,9 @@ hilt = "2.55"
 ksp = "2.0.0-1.0.21"
 taptargetview = "1.13.3"
 
-
+#Accompanist
+accompanist = "0.34.0"
+accompanistPager = "0.34.0"
 
 
 [libraries]
@@ -101,6 +103,11 @@ androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-com
 
 # Runtime
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+
+# Accompanist
+accompanist-navigation-animation = { module = "com.google.accompanist:accompanist-navigation-animation", version.ref = "accompanist" }
+accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
+accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanistPager" }
 
 [plugins]
 kapt = { id = "org.jetbrains.kotlin.kapt" }

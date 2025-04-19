@@ -13,3 +13,6 @@ object Home
 
 @Serializable
 object Notes
+
+@Serializable
+object Task

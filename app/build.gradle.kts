@@ -61,6 +61,11 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
+    // Accompanist
+    implementation(libs.accompanist.navigation.animation)
+    implementation(libs.accompanist.pager)
+    implementation(libs.accompanist.pager.indicators)
+
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
