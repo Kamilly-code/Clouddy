@@ -16,3 +16,9 @@ object Notes
 
 @Serializable
 object Task
+
+@Serializable
+object Pomodoro
+
+@Serializable
+object PomodoroScreen

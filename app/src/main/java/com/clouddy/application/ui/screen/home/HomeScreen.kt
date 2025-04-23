@@ -5,7 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,7 +33,9 @@ import com.example.clouddy.ui.theme.ClouddyTheme
 
 @Composable
 fun HomeScreen(navigateToLogin: () -> Unit, authVM: AuthVM,
-               navigateToNotes: () -> Unit, navigateToTask: () -> Unit) {
+               navigateToNotes: () -> Unit,
+               navigateToTask: () -> Unit,
+               navigateToPomodoro: () -> Unit) {
     ClouddyTheme {
         val authState = authVM.authState.observeAsState()
 
@@ -64,28 +68,54 @@ fun HomeScreen(navigateToLogin: () -> Unit, authVM: AuthVM,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text("Home page")
+                        Spacer(modifier = Modifier.height(55.dp))
 
-                        TextButton(onClick = { authVM.signOut() }) {
-                            Text(text = "Sign Out")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { navigateToNotes() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text(text = "Notes")
+                            }
+
+                            Button(
+                                onClick = { navigateToPomodoro() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text(text = "Pomodoro")
+                            }
+
+                            Button(
+                                onClick = { navigateToTask() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text(text = "Task")
+                            }
+                            Button(onClick = { authVM.signOut() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)) {
+                                Text(text = "Sign Out")
+                            }
                         }
-
-                        Button(
-                            onClick = { navigateToNotes() }
-                        ) { Text(text = "Notes") }
-
-                        Button(
-                            onClick = { navigateToTask() }
-                        ) { Text(text = "Task") }
 
                         Image(
                             painter = painterResource(id = R.drawable.ballerina_icon),
                             contentDescription = null,
                             modifier = Modifier.size(450.dp)
                         )
-
                     }
-
-
                 }
             }
         )

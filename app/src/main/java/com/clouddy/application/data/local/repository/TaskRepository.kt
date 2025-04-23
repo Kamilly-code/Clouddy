@@ -3,7 +3,9 @@ package com.clouddy.application.data.local.repository
 import com.clouddy.application.data.local.dao.TaskDao
 import com.clouddy.application.data.local.entity.Task
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class TaskRepository @Inject constructor(private val dao: TaskDao) {
     val tasks = dao.getAllTasks()
 

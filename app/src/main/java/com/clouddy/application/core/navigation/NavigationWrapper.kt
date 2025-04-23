@@ -10,6 +10,8 @@ import com.clouddy.application.ui.screen.login.screen.LoginScreen
 import com.clouddy.application.ui.screen.login.screen.RegistroScreen
 import com.clouddy.application.ui.screen.login.viewModel.AuthVM
 import com.clouddy.application.ui.screen.notes.NotesApp
+import com.clouddy.application.ui.screen.pomodoro.screen.PomodoroList
+import com.clouddy.application.ui.screen.pomodoro.screen.PomodoroScreen
 import com.clouddy.application.ui.screen.toDo.screen.TaskScreen
 
 @Composable
@@ -30,7 +32,8 @@ fun NavigationWrapper() {
                     navController.navigate(Login)},
                 authVM = authVM,
                 navigateToNotes = { navController.navigate(Notes) },
-                navigateToTask = {  }
+                navigateToPomodoro = { navController.navigate(Pomodoro) },
+                navigateToTask = { navController.navigate(Task)  }
             )
         }
 
@@ -49,6 +52,14 @@ fun NavigationWrapper() {
 
         composable<Task> {
             TaskScreen( navigateToNotesScreen = {navController.navigate(Notes)})
+        }
+
+        composable<Pomodoro> {
+            PomodoroList( navigateToPomodoroScreen = {navController.navigate(PomodoroScreen)})
+        }
+
+        composable<PomodoroScreen> {
+            PomodoroScreen()
         }
 
     }

@@ -87,9 +87,6 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
     }
 
 
-
-
-
     ClouddyTheme {
         Scaffold(
             floatingActionButton = {

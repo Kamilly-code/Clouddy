@@ -214,6 +214,7 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authV
                                 onValueChange = { newPassword -> password = newPassword },
                                 label = { Text("Password") },
                                 shape = RoundedCornerShape(15.dp)
+
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))
