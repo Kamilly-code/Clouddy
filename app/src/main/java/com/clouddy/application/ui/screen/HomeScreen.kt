@@ -18,14 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.clouddy.application.ui.viewModel.AuthState
 import com.clouddy.application.ui.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 
 @Composable
-fun HomeScreen(navigateToLogin: () -> Unit, authVM: AuthVM) {
+fun HomeScreen(navigateToLogin: () -> Unit) {
     ClouddyTheme {
+        val authVM: AuthVM = hiltViewModel()
         val authState = authVM.authState.observeAsState()
 
         LaunchedEffect(authState.value) {

@@ -18,15 +18,13 @@ fun NavigationWrapper() {
         composable<Login> {
             LoginScreen (navigateHome = { navController.navigate(Home) },
                 navigateToRegistro = { navController.navigate(Registro) },
-                authVM = authVM
             )
         }
 
         composable<Home> {
             HomeScreen (
                 navigateToLogin = {
-                    navController.navigate(Login)},
-                authVM = authVM
+                    navController.navigate(Login)}
             )
         }
 
@@ -34,8 +32,7 @@ fun NavigationWrapper() {
             RegistroScreen(
                 navigateHome = {
                     navController.navigate(Home) },
-                navigateToLogin = { navController.navigate(Login) },
-                authVM = authVM
+                navigateToLogin = { navController.navigate(Login) }
             )
         }
     }

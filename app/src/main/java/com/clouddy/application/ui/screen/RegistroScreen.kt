@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
 import com.clouddy.application.ui.viewModel.AuthState
 import com.clouddy.application.ui.viewModel.AuthVM
@@ -47,12 +49,14 @@ import com.example.clouddy.ui.theme.colorClouddy_2
 
 
 @Composable
-fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authVM: AuthVM) {
+fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
     ClouddyTheme {
+        val authVM: AuthVM = hiltViewModel()
         var name by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var repeatPassword by remember { mutableStateOf("") }
+        var genero by remember { mutableStateOf("") }
 
         val authState = authVM.authState.observeAsState()
         val context = LocalContext.current
@@ -71,7 +75,7 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authV
             content = { paddingValues ->
                 Box(
                     modifier = Modifier
-                        .fillMaxSize() // Asegura que el Box ocupe todo el espacio disponible
+                        .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
@@ -150,6 +154,33 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authV
                                     label = { Text("Name") },
                                     shape = RoundedCornerShape(15.dp)
                                 )
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+
+
+                                Text(
+                                    text = "Email",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.Black,
+                                    fontFamily = Iceland,
+                                    fontSize = 20.sp,
+                                    modifier = Modifier
+                                        .align(Alignment.Start)
+                                        .padding(horizontal = 35.dp)
+                                )
+
+                                TextField(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 30.dp)
+                                        .heightIn(max = 56.dp),
+                                    value = email,
+                                    onValueChange = { newEmail -> email = newEmail },
+                                    label = { Text("Email") },
+                                    shape = RoundedCornerShape(15.dp)
+                                )
+
                                 Spacer(modifier = Modifier.height(20.dp))
 
                                 Text(
@@ -175,28 +206,6 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authV
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
 
-                                Text(
-                                    text = "Email",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = Color.Black,
-                                    fontFamily = Iceland,
-                                    fontSize = 20.sp,
-                                    modifier = Modifier
-                                        .align(Alignment.Start)
-                                        .padding(horizontal = 35.dp)
-                                )
-
-                                TextField(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 30.dp)
-                                        .heightIn(max = 56.dp),
-                                    value = email,
-                                    onValueChange = { newEmail -> email = newEmail },
-                                    label = { Text("Email") },
-                                    shape = RoundedCornerShape(15.dp)
-                                )
-                                Spacer(modifier = Modifier.height(20.dp))
 
                                 Text(
                                     text = "Repeat Password",
@@ -219,6 +228,44 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authV
                                     label = { Text("Repeat Password") },
                                     shape = RoundedCornerShape(15.dp)
                                 )
+
+                                Text(
+                                    text = "Género",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.Black,
+                                    fontFamily = Iceland,
+                                    fontSize = 20.sp,
+                                    modifier = Modifier
+                                        .align(Alignment.Start)
+                                        .padding(horizontal = 35.dp)
+                                )
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 30.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(
+                                            selected = genero == "Femenino",
+                                            onClick = { genero = "Femenino" }
+                                        )
+                                        Text(text = "Femenino")
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(
+                                            selected = genero == "Masculino",
+                                            onClick = { genero = "Masculino" }
+                                        )
+                                        Text(text = "Masculino")
+                                    }
+                                }
+
+
+
                                 Spacer(modifier = Modifier.height(20.dp))
 
                                 Row(
@@ -244,7 +291,7 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit, authV
                                             .weight(1f)
                                             .padding(20.dp),
                                         onClick = {
-                                            authVM.registrarse(email, password) },
+                                            authVM.register(email, password, name, genero) },
                                         shape = RoundedCornerShape(30.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = colorClouddy_2),
                                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),

@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
 import com.clouddy.application.ui.viewModel.AuthState
 import com.clouddy.application.ui.viewModel.AuthVM
@@ -49,8 +50,9 @@ import com.example.clouddy.ui.theme.LoginColor
 
 
 @Composable
-fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authVM: AuthVM) {
+fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit) {
     ClouddyTheme {
+        val authVM: AuthVM = hiltViewModel()
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
 
@@ -244,12 +246,6 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit, authV
                         }
 
                         }
-
-
-
-
-
-
 
                     }
                 }
