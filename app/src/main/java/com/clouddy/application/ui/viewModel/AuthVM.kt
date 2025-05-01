@@ -39,6 +39,7 @@ class AuthVM @Inject constructor(
     fun register(
         email: String,
         password: String,
+        repeatPassword: String,
         name: String,
         genero: String
     ) {
@@ -46,7 +47,7 @@ class AuthVM @Inject constructor(
             nombreUser = name,
             email = email,
             password = password,
-            repeatPassword = password, // asumiendo aqui que el repeat seria = password
+            repeatPassword = repeatPassword,
             genero = genero
         )
 

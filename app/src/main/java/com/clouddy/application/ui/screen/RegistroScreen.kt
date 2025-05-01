@@ -291,7 +291,7 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                             .weight(1f)
                                             .padding(20.dp),
                                         onClick = {
-                                            authVM.register(email, password, name, genero) },
+                                            authVM.register(email, password, repeatPassword, name, genero) },
                                         shape = RoundedCornerShape(30.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = colorClouddy_2),
                                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),

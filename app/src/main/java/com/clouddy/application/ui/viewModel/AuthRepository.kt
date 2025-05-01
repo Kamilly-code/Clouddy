@@ -40,36 +40,36 @@ class AuthRepository @Inject constructor(
             userData.email.isBlank() || userData.password.isBlank() ||
             userData.nombreUser.isBlank() || userData.genero.isBlank()
         ) {
-            onResult(AuthState.Error("Todos os campos são obrigatórios"))
+            onResult(AuthState.Error("Todos los campos son obligatorios"))
             return
         }
 
         onResult(AuthState.Loading)
 
-        firebaseClient.auth.createUserWithEmailAndPassword(userData.email, userData.password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Se cria en el firebase y se guarda en la API
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            val response = firebaseClient.registerUser(userData)
-                            withContext(Dispatchers.Main) {
-                                if (response.isSuccessful) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = firebaseClient.registerUser(userData)
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful) {
+
+                        firebaseClient.auth.createUserWithEmailAndPassword(userData.email, userData.password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
                                     onResult(AuthState.Authenticated)
                                 } else {
-                                    onResult(AuthState.Error("Error al registrarse en la API"))
+                                    onResult(AuthState.Error(task.exception?.message ?: "Error al crear el usuario en Firebase"))
                                 }
                             }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                onResult(AuthState.Error("Error: ${e.message}"))
-                            }
-                        }
+                    } else {
+                        onResult(AuthState.Error("Error al conectarse con la API, verifique si todos los campos son correctos"))
                     }
-                } else {
-                    onResult(AuthState.Error(task.exception?.message ?: "Error desconocido"))
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onResult(AuthState.Error("Erro: ${e.message}"))
                 }
             }
+        }
     }
 
     fun signOut(onResult: () -> Unit) {
