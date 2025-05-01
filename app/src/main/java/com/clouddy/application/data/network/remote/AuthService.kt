@@ -1,6 +1,6 @@
-package com.clouddy.application.data.network.response
+package com.clouddy.application.data.network.remote
 
-import com.clouddy.application.data.network.FirebaseClient
+import com.clouddy.application.data.model.LoginResult
 import com.google.firebase.auth.AuthResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 class AuthService @Inject constructor(private val firebase: FirebaseClient)  {
 
-    val verifyAccount : Flow<Boolean>  = flow {
+    val verifyAccount : Flow<Boolean> = flow {
         while (true) {
             val verified = wasEmailVerified()
             emit(verified)

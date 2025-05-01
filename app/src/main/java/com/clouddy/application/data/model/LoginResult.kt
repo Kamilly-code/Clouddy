@@ -1,4 +1,4 @@
-package com.clouddy.application.data.network.response
+package com.clouddy.application.data.model
 
 sealed class LoginResult {
     object Error : LoginResult()

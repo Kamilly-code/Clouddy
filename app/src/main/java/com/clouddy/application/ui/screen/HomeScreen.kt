@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.clouddy.application.ui.viewModel.AuthState
+import com.clouddy.application.domain.usecase.AuthState
 import com.clouddy.application.ui.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 

@@ -55,10 +55,7 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.gson)
-
+    
     //Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
@@ -109,4 +106,12 @@ dependencies {
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    //Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+
+    //Icons Extended
+    implementation(libs.androidx.material.icons.extended)
+
 }

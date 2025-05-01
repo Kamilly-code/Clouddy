@@ -1,14 +1,14 @@
-package com.clouddy.application.ui.viewModel
+package com.clouddy.application.data.repository
 
-import com.clouddy.application.data.network.FirebaseClient
-import com.clouddy.application.data.network.UserData
+import com.clouddy.application.data.network.remote.FirebaseClient
+import com.clouddy.application.data.model.UserData
+import com.clouddy.application.domain.usecase.AuthState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
-
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -52,12 +52,20 @@ class AuthRepository @Inject constructor(
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful) {
 
-                        firebaseClient.auth.createUserWithEmailAndPassword(userData.email, userData.password)
+                        firebaseClient.auth.createUserWithEmailAndPassword(
+                            userData.email,
+                            userData.password
+                        )
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     onResult(AuthState.Authenticated)
                                 } else {
-                                    onResult(AuthState.Error(task.exception?.message ?: "Error al crear el usuario en Firebase"))
+                                    onResult(
+                                        AuthState.Error(
+                                            task.exception?.message
+                                                ?: "Error al crear el usuario en Firebase"
+                                        )
+                                    )
                                 }
                             }
                     } else {

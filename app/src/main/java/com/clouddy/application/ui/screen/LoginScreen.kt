@@ -16,12 +16,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,16 +43,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
-import com.clouddy.application.ui.viewModel.AuthState
+import com.clouddy.application.domain.usecase.AuthState
 import com.clouddy.application.ui.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 import com.example.clouddy.ui.theme.HoltwoodOneSC
 import com.example.clouddy.ui.theme.Iceland
 import com.example.clouddy.ui.theme.LoginColor
+
 
 
 @Composable
@@ -55,6 +64,8 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit) {
         val authVM: AuthVM = hiltViewModel()
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+
+        var passwordVisible by remember { mutableStateOf(false) }
 
         val authState = authVM.authState.observeAsState()
         val context = LocalContext.current
@@ -167,7 +178,11 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit) {
                                 value = email,
                                 onValueChange = { newEmail -> email = newEmail },
                                 label = { Text("Email") },
-                                shape = RoundedCornerShape(15.dp)
+                                shape = RoundedCornerShape(15.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                )
                             )
                             Spacer(modifier = Modifier.height(50.dp))
 
@@ -190,7 +205,22 @@ fun LoginScreen(navigateHome: () -> Unit , navigateToRegistro: () -> Unit) {
                                 value = password,
                                 onValueChange = { newPassword -> password = newPassword },
                                 label = { Text("Password") },
-                                shape = RoundedCornerShape(15.dp)
+                                shape = RoundedCornerShape(15.dp),
+                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    val image = if (passwordVisible)
+                                        Icons.Filled.Visibility
+                                    else Icons.Filled.VisibilityOff
+
+                                    IconButton(onClick = {passwordVisible = !passwordVisible}) {
+                                        Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                                    }
+
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                )
                             )
 
                             Spacer(modifier = Modifier.height(20.dp))

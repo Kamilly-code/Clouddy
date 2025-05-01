@@ -2,6 +2,8 @@ package com.clouddy.application.ui.screen
 
 
 import android.widget.Toast
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,8 +18,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -35,17 +40,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
-import com.clouddy.application.ui.viewModel.AuthState
+import com.clouddy.application.domain.usecase.AuthState
 import com.clouddy.application.ui.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 import com.example.clouddy.ui.theme.HoltwoodOneSC
 import com.example.clouddy.ui.theme.Iceland
 import com.example.clouddy.ui.theme.colorClouddy_1
 import com.example.clouddy.ui.theme.colorClouddy_2
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldDefaults
+
 
 
 @Composable
@@ -56,6 +68,32 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var repeatPassword by remember { mutableStateOf("") }
+
+        var passwordVisible by remember { mutableStateOf(false) }
+        var repeatPasswordVisible by remember { mutableStateOf(false) }
+        val isPasswordValid = remember(password) {
+            password.matches(Regex("^(?=.*[A-Z])(?=.*\\d).{8,}$"))
+        }
+        val passwordBorderColor by animateColorAsState(
+            targetValue = when {
+                password.isBlank() -> Color.Gray
+                isPasswordValid -> Color(0xFF4CAF50)
+                else -> Color(0xFFF44336)
+            },
+            animationSpec = tween(durationMillis = 500)
+        )
+        val isRepeatPasswordValid = remember(repeatPassword, password) {
+            repeatPassword.matches(Regex("^(?=.*[A-Z])(?=.*\\d).{8,}$")) && repeatPassword == password
+        }
+        val repeatPasswordBorderColor by animateColorAsState(
+            targetValue = when {
+                repeatPassword.isBlank() -> Color.Gray
+                isRepeatPasswordValid -> Color(0xFF4CAF50)
+                else -> Color(0xFFF44336)
+            },
+            animationSpec = tween(durationMillis = 500)
+        )
+
         var genero by remember { mutableStateOf("") }
 
         val authState = authVM.authState.observeAsState()
@@ -152,7 +190,13 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                     value = name,
                                     onValueChange = { newName -> name = newName },
                                     label = { Text("Name") },
-                                    shape = RoundedCornerShape(15.dp)
+                                    shape = RoundedCornerShape(15.dp),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent
+                                    )
                                 )
 
                                 Spacer(modifier = Modifier.height(20.dp))
@@ -178,7 +222,13 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                     value = email,
                                     onValueChange = { newEmail -> email = newEmail },
                                     label = { Text("Email") },
-                                    shape = RoundedCornerShape(15.dp)
+                                    shape = RoundedCornerShape(15.dp),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent
+                                    )
                                 )
 
                                 Spacer(modifier = Modifier.height(20.dp))
@@ -194,16 +244,43 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                         .padding(horizontal = 35.dp)
                                 )
 
-                                TextField(
+                                OutlinedTextField(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 30.dp)
-                                        .heightIn(max = 56.dp),
+                                        .heightIn(max = 64.dp),
                                     value = password,
                                     onValueChange = { newPassword -> password = newPassword },
                                     label = { Text("Password") },
-                                    shape = RoundedCornerShape(15.dp)
+                                    shape = RoundedCornerShape(15.dp),
+                                    singleLine = true,
+                                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                            Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                                        }
+                                    },
+
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = passwordBorderColor,
+                                        unfocusedIndicatorColor = passwordBorderColor
+                                    )
                                 )
+
+                                if (password.isNotBlank()) {
+                                    Text(
+                                        text = if (isPasswordValid) "La contraseña es ser valida"
+                                        else "La contraseña debe tener al menos 8 caracteres, 1 mayúscula y 1 número.",
+                                        color = if (isPasswordValid) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                        fontSize = 14.sp,
+                                        modifier = Modifier
+                                            .padding(start = 35.dp, top = 4.dp)
+                                    )
+                                }
+
                                 Spacer(modifier = Modifier.height(20.dp))
 
 
@@ -218,16 +295,45 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                         .padding(horizontal = 35.dp)
                                 )
 
-                                TextField(
+                                OutlinedTextField(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 30.dp)
-                                        .heightIn(max = 56.dp),
+                                        .heightIn(max = 64.dp),
                                     value = repeatPassword,
                                     onValueChange = { newRepeatPassword -> repeatPassword = newRepeatPassword },
                                     label = { Text("Repeat Password") },
-                                    shape = RoundedCornerShape(15.dp)
+                                    shape = RoundedCornerShape(15.dp),
+                                    singleLine = true,
+                                    visualTransformation = if (repeatPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        val image = if (repeatPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                                        IconButton(onClick = { repeatPasswordVisible = !repeatPasswordVisible }) {
+                                            Icon(imageVector = image, contentDescription = if (repeatPasswordVisible) "Hide password" else "Show password")
+                                        }
+                                    },
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White,
+                                        focusedIndicatorColor = repeatPasswordBorderColor,
+                                        unfocusedIndicatorColor = repeatPasswordBorderColor
+                                    )
                                 )
+
+                                if (repeatPassword.isNotBlank()) {
+                                    Text(
+                                        text = when {
+                                            repeatPassword != password -> "Las contraseñas no coinciden"
+                                            !repeatPassword.matches(Regex("^(?=.*[A-Z])(?=.*\\d).{8,}$")) -> "La contraseña debe tener al menos 8 caracteres, 1 mayúscula y 1 número."
+                                            else -> "Las contraseñas coinciden"
+                                        },
+                                        color = if (isRepeatPasswordValid) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                        fontSize = 14.sp,
+                                        modifier = Modifier
+                                            .padding(start = 35.dp, top = 4.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(20.dp))
 
                                 Text(
                                     text = "Género",
@@ -240,7 +346,6 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                         .padding(horizontal = 35.dp)
                                 )
 
-                                Spacer(modifier = Modifier.height(20.dp))
 
                                 Row(
                                     modifier = Modifier
@@ -305,9 +410,10 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
 
                     }
 
-                }
+
             }
-        )
-    }
+
+    })
+}
 }
 

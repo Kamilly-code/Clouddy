@@ -1,4 +1,4 @@
-package com.clouddy.application.data.network
+package com.clouddy.application.data.model
 
 data class UserData(
     val nombreUser: String,
@@ -7,4 +7,3 @@ data class UserData(
     val repeatPassword: String,
     val genero: String
 )
-

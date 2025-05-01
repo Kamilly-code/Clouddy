@@ -1,7 +1,6 @@
-package com.clouddy.application.data.network
+package com.clouddy.application.data.network.remote
 
-
-
+import com.clouddy.application.data.model.UserData
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
 

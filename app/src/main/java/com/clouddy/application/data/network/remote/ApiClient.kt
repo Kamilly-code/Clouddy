@@ -1,5 +1,4 @@
-package com.clouddy.application.data.network
-
+package com.clouddy.application.data.network.remote
 
 import javax.inject.Inject
 

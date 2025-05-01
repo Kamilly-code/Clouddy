@@ -1,6 +1,6 @@
-package com.clouddy.application.data.network
+package com.clouddy.application.data.network.remote
 
-
+import com.clouddy.application.data.model.UserData
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST

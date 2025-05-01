@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.viewModel
+package com.clouddy.application.domain.usecase
 
 sealed class AuthState {
     object Authenticated : AuthState()
