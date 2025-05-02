@@ -3,12 +3,19 @@ package com.clouddy.application.ui.screen.login.viewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.viewModelScope
+import com.clouddy.application.data.model.UserData
+import com.clouddy.application.data.repository.AuthRepository
+import com.clouddy.application.domain.usecase.AuthState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
-class AuthVM : ViewModel() {
-
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+@HiltViewModel
+class AuthVM @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
@@ -18,54 +25,44 @@ class AuthVM : ViewModel() {
     }
 
     fun checkAuthStatus() {
-        if (auth.currentUser == null) {
-            _authState.value = AuthState.Unauthenticated
+        _authState.value = if (authRepository.isUserAuthenticated()) {
+            AuthState.Authenticated
         } else {
-            _authState.value = AuthState.Authenticated
+            AuthState.Unauthenticated
         }
     }
 
     fun login(email: String, password: String) {
-        if (email.isEmpty() || password.isEmpty()) {
-            _authState.value = AuthState.Error("Email y contraseña son requeridos")
-            return
+        authRepository.login(email, password) {
+            _authState.postValue(it)
         }
-        _authState.value = AuthState.Loading
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _authState.value = AuthState.Authenticated
-                } else {
-                    _authState.value = AuthState.Error(task.exception?.message ?: "Error desconocido")
-                }
-            }
     }
 
-    fun registrarse(email: String, password: String) {
-        if (email.isEmpty() || password.isEmpty()) {
-            _authState.value = AuthState.Error("Email y contraseña son requeridos")
-            return
+    fun register(
+        email: String,
+        password: String,
+        repeatPassword: String,
+        name: String,
+        genero: String
+    ) {
+        val userData = UserData(
+            nombreUser = name,
+            email = email,
+            password = password,
+            repeatPassword = repeatPassword,
+            genero = genero
+        )
+
+        authRepository.registerWithFirebaseAndApi(userData) {
+            _authState.postValue(it)
         }
-        _authState.value = AuthState.Loading
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    _authState.value = AuthState.Authenticated
-                } else {
-                    _authState.value = AuthState.Error(task.exception?.message ?: "Error desconocido")
-                }
-            }
     }
 
     fun signOut() {
-        auth.signOut()
-        _authState.value = AuthState.Unauthenticated
+        authRepository.signOut {
+            _authState.value = AuthState.Unauthenticated
+        }
     }
 }
 
-sealed class AuthState {
-    object Authenticated : AuthState()
-    object Unauthenticated : AuthState()
-    object Loading : AuthState()
-    data class Error(val message: String) : AuthState()
-}
+

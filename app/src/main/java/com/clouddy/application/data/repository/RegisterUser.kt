@@ -1,4 +1,4 @@
-package com.clouddy.application.data.local.repository.auth
+package com.clouddy.application.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
 

@@ -26,17 +26,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
-import com.clouddy.application.ui.screen.login.viewModel.AuthState
+import com.clouddy.application.domain.usecase.AuthState
 import com.clouddy.application.ui.screen.login.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 
 @Composable
-fun HomeScreen(navigateToLogin: () -> Unit, authVM: AuthVM,
+fun HomeScreen(navigateToLogin: () -> Unit,
                navigateToNotes: () -> Unit,
                navigateToTask: () -> Unit,
                navigateToPomodoro: () -> Unit) {
     ClouddyTheme {
+        val authVM: AuthVM = hiltViewModel()
         val authState = authVM.authState.observeAsState()
 
         LaunchedEffect(authState.value) {

@@ -49,8 +49,15 @@ taptargetview = "1.13.3"
 accompanist = "0.34.0"
 accompanistPager = "0.34.0"
 
+retrofit = "2.9.0"
+gson = "2.10.1"
+
+#IconsExtended
+materialIconsExtended = "1.7.8"
+
 
 [libraries]
+
 # Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 
@@ -109,6 +116,13 @@ accompanist-navigation-animation = { module = "com.google.accompanist:accompanis
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
 accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanistPager" }
 
+#Retrofit
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+
+#IconExtended
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+
 [plugins]
 kapt = { id = "org.jetbrains.kotlin.kapt" }
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -118,4 +132,3 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-services = { id = "com.google.gms.google-services", version = "4.4.2" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
-
