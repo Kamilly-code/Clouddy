@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen
+package com.clouddy.application.ui.screen.login.screen
 
 
 import android.widget.Toast
@@ -27,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -182,11 +181,11 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                         .padding(horizontal = 35.dp)
                                 )
 
-                                TextField(
+                                OutlinedTextField(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 30.dp)
-                                        .heightIn(max = 56.dp),
+                                        .heightIn(max = 64.dp),
                                     value = name,
                                     onValueChange = { newName -> name = newName },
                                     label = { Text("Name") },
@@ -194,8 +193,8 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                     colors = TextFieldDefaults.colors(
                                         focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White,
-                                        focusedIndicatorColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent
+                                        focusedIndicatorColor = repeatPasswordBorderColor,
+                                        unfocusedIndicatorColor = repeatPasswordBorderColor
                                     )
                                 )
 
@@ -214,11 +213,11 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                         .padding(horizontal = 35.dp)
                                 )
 
-                                TextField(
+                                OutlinedTextField(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 30.dp)
-                                        .heightIn(max = 56.dp),
+                                        .heightIn(max = 64.dp),
                                     value = email,
                                     onValueChange = { newEmail -> email = newEmail },
                                     label = { Text("Email") },
@@ -226,8 +225,8 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                     colors = TextFieldDefaults.colors(
                                         focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White,
-                                        focusedIndicatorColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent
+                                        focusedIndicatorColor = repeatPasswordBorderColor,
+                                        unfocusedIndicatorColor = repeatPasswordBorderColor
                                     )
                                 )
 
@@ -407,12 +406,8 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
                                 }
                             }
                         }
-
                     }
-
-
             }
-
     })
 }
 }

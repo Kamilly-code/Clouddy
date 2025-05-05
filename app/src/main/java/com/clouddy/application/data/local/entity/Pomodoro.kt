@@ -3,7 +3,7 @@ package com.clouddy.application.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.sql.Time
+
 
 @Entity(tableName = "pomodoro_table")
 data class Pomodoro(

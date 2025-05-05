@@ -71,7 +71,15 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    //http
+    implementation(libs.httpLoggingInterceptor)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
+
     // Hilt
+    //
     implementation(libs.hilt)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

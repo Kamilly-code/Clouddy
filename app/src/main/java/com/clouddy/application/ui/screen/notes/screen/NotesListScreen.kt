@@ -2,7 +2,6 @@ package com.clouddy.application.ui.screen.notes.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
@@ -10,9 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -35,19 +32,14 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.clouddy.application.R
 import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.notes.components.NoteItemView
-import kotlin.collections.plusAssign
-import kotlin.compareTo
-import kotlin.text.get
 
 @Composable
 fun NotesListScreen(
@@ -72,7 +64,7 @@ fun NotesListScreen(
         dragOffset.value += delta
     }
 
-    // Lógica de navegação
+    // Lógica de navegación
     LaunchedEffect(dragOffset.value) {
         if (!hasNavigated.value && dragOffset.value < -dragThreshold) {
             hasNavigated.value = true
@@ -103,7 +95,7 @@ fun NotesListScreen(
                             onDragStopped = { dragOffset.value = 0f; hasNavigated.value = false }
                         )
                 ) {
-                    // Conteúdo da tela
+                    // Contenido de la pantalla
                     Image(
                         painter = painterResource(id = R.drawable.plants3),
                         contentDescription = null,

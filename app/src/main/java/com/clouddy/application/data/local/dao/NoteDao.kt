@@ -22,5 +22,5 @@ interface NoteDao {
 
 
     @Query("UPDATE notes_table SET title = :title , note = :note WHERE id = :id")
-    suspend fun update(id: Int?, title : String?, note : String?)
+    suspend fun update(id: Long?, title : String?, note : String?)
 }

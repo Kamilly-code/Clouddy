@@ -1,6 +1,6 @@
 package com.clouddy.application.data.repository
 
-import com.clouddy.application.data.network.remote.FirebaseClient
+import com.clouddy.application.data.network.remote.user.FirebaseClient
 import com.clouddy.application.data.model.UserData
 import com.clouddy.application.domain.usecase.AuthState
 import kotlinx.coroutines.CoroutineScope

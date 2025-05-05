@@ -5,8 +5,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.clouddy.application.ui.screen.LoginScreen
-import com.clouddy.application.ui.screen.RegistroScreen
+import com.clouddy.application.ui.screen.login.screen.LoginScreen
+import com.clouddy.application.ui.screen.login.screen.RegistroScreen
 import com.clouddy.application.ui.screen.home.HomeScreen
 import com.clouddy.application.ui.screen.login.viewModel.AuthVM
 import com.clouddy.application.ui.screen.notes.NotesApp

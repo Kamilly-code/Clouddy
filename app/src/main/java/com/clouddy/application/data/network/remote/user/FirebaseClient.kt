@@ -1,4 +1,4 @@
-package com.clouddy.application.data.network.remote
+package com.clouddy.application.data.network.remote.user
 
 import com.clouddy.application.data.model.UserData
 import com.google.firebase.auth.FirebaseAuth

@@ -10,6 +10,7 @@ import com.clouddy.application.data.local.db.NoteDataBase
 import com.clouddy.application.data.local.entity.Note
 import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.data.local.repository.NotesRepository
+import com.clouddy.application.data.network.remote.note.NoteRequestDto
 import com.clouddy.application.domain.model.NoteItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -36,6 +37,24 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
         repository.update(note)
     }
 
+    // Métodos auxiliares para manejar NoteItem en el ViewModel
 
 
+    fun insertNoteRemoteAndLocal(noteDto: NoteRequestDto) {
+        viewModelScope.launch {
+            repository.insertNoteRemoteAndLocal(noteDto)
+        }
+    }
+
+    fun updateNoteRemoteAndLocal(noteItem: NoteItem) = {
+        viewModelScope.launch{
+            repository.updateNoteRemoteAndLocal(noteItem)
+        }
+    }
+
+    fun deleteNoteRemoteAndLocal(noteItem: NoteItem) = {
+        viewModelScope.launch {
+            repository.deleteNoteRemoteAndLocal(noteItem)
+        }
+    }
 }

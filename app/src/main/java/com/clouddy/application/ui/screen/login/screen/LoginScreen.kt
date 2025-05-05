@@ -1,4 +1,4 @@
-package com.clouddy.application.ui.screen
+package com.clouddy.application.ui.screen.login.screen
 
 import android.widget.Toast
 import androidx.compose.foundation.Image

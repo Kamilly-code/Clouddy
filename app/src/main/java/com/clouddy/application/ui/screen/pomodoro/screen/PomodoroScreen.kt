@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
@@ -32,12 +31,6 @@ import com.clouddy.application.ui.screen.pomodoro.components.MoonProgress
 import com.clouddy.application.ui.screen.pomodoro.viewModel.PomodoroViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
 import kotlinx.coroutines.delay
-import kotlin.collections.minusAssign
-import kotlin.compareTo
-import kotlin.div
-import kotlin.inc
-import kotlin.rem
-import kotlin.text.compareTo
 
 
 @Composable

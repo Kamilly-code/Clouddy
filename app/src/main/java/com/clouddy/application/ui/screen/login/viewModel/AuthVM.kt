@@ -3,12 +3,10 @@ package com.clouddy.application.ui.screen.login.viewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.clouddy.application.data.model.UserData
 import com.clouddy.application.data.repository.AuthRepository
 import com.clouddy.application.domain.usecase.AuthState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 

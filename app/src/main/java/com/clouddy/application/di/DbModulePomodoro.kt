@@ -2,11 +2,8 @@ package com.clouddy.application.di
 
 import android.content.Context
 import androidx.room.Room
-import com.clouddy.application.core.utils.DATABASE_NOTE
 import com.clouddy.application.core.utils.DATABASE_POMODORO
-import com.clouddy.application.data.local.dao.NoteDao
 import com.clouddy.application.data.local.dao.PomodoroDao
-import com.clouddy.application.data.local.db.NoteDataBase
 import com.clouddy.application.data.local.db.PomodoroDatabase
 import dagger.Module
 import dagger.Provides
