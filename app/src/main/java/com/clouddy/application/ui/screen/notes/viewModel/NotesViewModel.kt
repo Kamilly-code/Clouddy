@@ -1,60 +1,151 @@
 package com.clouddy.application.ui.screen.notes.viewModel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
+
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.clouddy.application.data.local.db.NoteDataBase
 import com.clouddy.application.data.local.entity.Note
 import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.data.local.repository.NotesRepository
-import com.clouddy.application.data.network.remote.note.NoteRequestDto
 import com.clouddy.application.domain.model.NoteItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.clouddy.application.core.utils.NetworkUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class NotesViewModel @Inject constructor(private val repository: NotesRepository) : ViewModel() {
 
-    val notes: LiveData<List<NoteItem>> = repository.allNotes.map { list ->
-        list.map { it.toNoteItem() }
+    val notes: StateFlow<List<NoteItem>> = repository.allNotes
+        .map { list -> list.map { it.toNoteItem() } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    init {
+        loadNotes()
     }
 
-    val allNotes: LiveData<List<Note>> = repository.allNotes
+    fun loadNotes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val backendOnline = repository.isBackendAvailable()
+            if (backendOnline) {
+                repository.syncNotesWithServer()
+            } else {
+                Log.w("NotesViewModel", "Backend offline — usando somente dados locais")
+            }
+        }
+    }
 
     fun insert(note: Note) = viewModelScope.launch {
-        repository.insert(note)
+        val newId = repository.insert(note)
+        Log.d("INSERT", "Nota inserida com ID: $newId")
     }
 
-    fun delete(note: Note) = viewModelScope.launch {
-        repository.delete(note)
-    }
-
-    fun update(note: Note) = viewModelScope.launch {
-        repository.update(note)
-    }
 
     // Métodos auxiliares para manejar NoteItem en el ViewModel
 
 
-    fun insertNoteRemoteAndLocal(noteDto: NoteRequestDto) {
-        viewModelScope.launch {
-            repository.insertNoteRemoteAndLocal(noteDto)
+    fun insertOrUpdateNote(note: Note) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val isConnected = repository.isBackendAvailable()
+
+            if (isConnected) {
+                if (note.remoteId == null) {
+                    repository.insertNoteRemoteAndLocal(note)
+                } else if (note.isUpdated) {
+                    repository.updateNoteRemoteAndLocal(note)
+                } else {
+                    // Nenhuma ação necessária — nota já está sincronizada
+                    Log.d("NotesViewModel", "Nota já sincronizada — nenhuma ação necessária.")
+                }
+            } else {
+                val localNote = if (note.remoteId == null) {
+                    note.copy(isSynced = false)
+                } else {
+                    note.copy(isUpdated = true, isSynced = false)
+                }
+
+                repository.insert(localNote)
+            }
         }
     }
 
-    fun updateNoteRemoteAndLocal(noteItem: NoteItem) = {
-        viewModelScope.launch{
-            repository.updateNoteRemoteAndLocal(noteItem)
+    fun updateNote(note: Note, context: Context) {
+        viewModelScope.launch {
+            if (note.remoteId == null) {
+                repository.insert(note)
+                Log.e("ViewModel", "Tentou atualizar nota sem remoteId. Inserindo local.")
+            } else {
+                repository.updateNoteRemoteAndLocal(note)
+            }
         }
     }
 
-    fun deleteNoteRemoteAndLocal(noteItem: NoteItem) = {
-        viewModelScope.launch {
-            repository.deleteNoteRemoteAndLocal(noteItem)
+    fun deleteNote(note: Note, context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val networkUtils = NetworkUtils()
+            if (networkUtils.isConnected(context)) {
+                repository.deleteNoteRemoteAndLocal(note)
+            } else {
+                val localNote = note.copy(isDeleted = true, isSynced = false)
+                repository.updateNoteRemoteAndLocal(localNote)
+            }
         }
     }
+
+    fun syncNotesIfNeeded() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.syncNotesWithServer()
+        }
+    }
+
+    fun syncNotesWithServer() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.syncNotesWithServer()
+        }
+    }
+    init {
+        loadNotes()
+        testarCRUD()
+    }
+
+    fun testarCRUD() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val note = Note(
+                title = "Nota de teste",
+                note = "Conteúdo original",
+                date = "14/05/2025"
+            )
+            val id = repository.insert(note) // retorna ID gerado pelo Room
+
+            Log.d("TESTE", "Nota criada com ID: $id")
+
+            delay(1000) // só para simular um tempo de espera
+
+            val notaAtualizada = note.copy(
+                id = id, // <- ESSENCIAL
+                note = "Conteúdo atualizado",
+                isUpdated = true
+            )
+
+            repository.update(notaAtualizada)
+            Log.d("TESTE", "Nota atualizada")
+
+            delay(1000)
+
+            repository.delete(notaAtualizada)
+            Log.d("TESTE", "Nota deletada")
+        }
+    }
+
 }

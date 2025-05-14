@@ -24,7 +24,9 @@ object DbModuleNote {
             context,
             NoteDataBase::class.java,
             DATABASE_NOTE
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
     @Provides
     fun provideNoteDao(database: NoteDataBase) : NoteDao {

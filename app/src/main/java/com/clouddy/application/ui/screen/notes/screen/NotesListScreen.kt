@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,11 +34,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.clouddy.application.R
+import com.clouddy.application.core.utils.NetworkUtils
 import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.notes.components.NoteItemView
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.runtime.collectAsState
+import com.clouddy.application.data.local.mapper.toNote
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun NotesListScreen(
@@ -48,11 +55,13 @@ fun NotesListScreen(
     onAddNewNote: () -> Unit,
     navigateToTaskScreen: (() -> Unit)? = null
 ) {
-    val notes by viewModel.allNotes.observeAsState(emptyList())
+    val notes by viewModel.notes.collectAsState()
     var query by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     val filteredNotes = notes.filter {
-        (it.title ?: "").contains(query, ignoreCase = true) || (it.note ?: "").contains(query, ignoreCase = true)
+        (it.title ?: "").contains(query, ignoreCase = true) ||
+                (it.note ?: "").contains(query, ignoreCase = true)
     }
 
 
@@ -69,6 +78,16 @@ fun NotesListScreen(
         if (!hasNavigated.value && dragOffset.value < -dragThreshold) {
             hasNavigated.value = true
             navigateToTaskScreen?.invoke()
+        }
+    }
+
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            val networkUtils = NetworkUtils()
+            if (networkUtils.isConnected(context)) {
+                viewModel.syncNotesIfNeeded()
+            }
         }
     }
 
@@ -132,11 +151,10 @@ fun NotesListScreen(
                             verticalItemSpacing = 2.dp,
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            items(filteredNotes.size) { index ->
-                                val note = filteredNotes[index]
-                                val noteItem = note.toNoteItem()
-                                NoteItemView(noteItem, onClick = { onNoteClicked(note) })
+                            items(filteredNotes, key = {it.id ?: filteredNotes.indexOf(it) }) { noteItem ->
+                                NoteItemView(noteItem, onClick = { onNoteClicked(noteItem.toNote()) })
                             }
+
                         }
                     }
 

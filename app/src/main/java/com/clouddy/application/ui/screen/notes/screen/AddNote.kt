@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.clouddy.application.R
@@ -53,6 +54,7 @@ fun AddNote(
     ClouddyTheme {
         var title by remember { mutableStateOf(noteToEdit?.title ?: "") }
         var content by remember { mutableStateOf(noteToEdit?.note ?: "") }
+        val context = LocalContext.current
 
         Scaffold(
             topBar = {
@@ -66,7 +68,7 @@ fun AddNote(
                     actions = {
                         if (noteToEdit != null) {
                             IconButton(onClick = {
-                                viewModel.delete(noteToEdit)
+                                viewModel.deleteNote(noteToEdit,context)
                                 onDeleteNote?.invoke()
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete")
@@ -75,22 +77,21 @@ fun AddNote(
 
                         IconButton(onClick = {
                             if (title.isNotBlank() && content.isNotBlank()) {
-                                val currentDate = SimpleDateFormat(
-                                    "dd/MM/yyyy",
-                                    Locale.getDefault()
-                                ).format(Date())
+                                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
                                 val newNote = Note(
                                     id = noteToEdit?.id,
+                                    remoteId = noteToEdit?.remoteId ?: "",
                                     title = title,
                                     note = content,
                                     date = currentDate
                                 )
 
                                 if (noteToEdit != null) {
-                                    viewModel.update(newNote)
+                                    viewModel.updateNote(newNote,context)
                                 } else {
-                                    viewModel.insert(newNote)
+                                    viewModel.insertOrUpdateNote(newNote)
                                 }
+
                                 onNoteSaved()
                             }
                         }) {
