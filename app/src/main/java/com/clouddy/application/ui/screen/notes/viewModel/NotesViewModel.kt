@@ -114,38 +114,7 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
             repository.syncNotesWithServer()
         }
     }
-    init {
-        loadNotes()
-        testarCRUD()
-    }
 
-    fun testarCRUD() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val note = Note(
-                title = "Nota de teste",
-                note = "Conteúdo original",
-                date = "14/05/2025"
-            )
-            val id = repository.insert(note) // retorna ID gerado pelo Room
 
-            Log.d("TESTE", "Nota criada com ID: $id")
-
-            delay(1000) // só para simular um tempo de espera
-
-            val notaAtualizada = note.copy(
-                id = id, // <- ESSENCIAL
-                note = "Conteúdo atualizado",
-                isUpdated = true
-            )
-
-            repository.update(notaAtualizada)
-            Log.d("TESTE", "Nota atualizada")
-
-            delay(1000)
-
-            repository.delete(notaAtualizada)
-            Log.d("TESTE", "Nota deletada")
-        }
-    }
 
 }

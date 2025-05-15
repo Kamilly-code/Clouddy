@@ -79,10 +79,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     // Hilt
-    //
     implementation(libs.hilt)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    //calendar
+    implementation(libs.calendar)
+    implementation(libs.kalendar)
+    implementation(libs.kalendar.foundation)
+
 
     // Architecture Components
     implementation(libs.androidx.lifecycle.runtime.ktx)
