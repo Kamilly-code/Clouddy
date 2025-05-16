@@ -3,6 +3,7 @@ package com.clouddy.application.ui.screen.notes.viewModel
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.clouddy.application.data.local.entity.Note
@@ -19,6 +20,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @HiltViewModel
 class NotesViewModel @Inject constructor(private val repository: NotesRepository) : ViewModel() {
@@ -47,7 +50,9 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
     }
 
     fun insert(note: Note) = viewModelScope.launch {
-        val newId = repository.insert(note)
+        val formattedDate = formatDate(LocalDate.now())
+        val noteWithFormattedDate = note.copy(date = formattedDate)
+        val newId = repository.insert(noteWithFormattedDate)
         Log.d("INSERT", "Nota inserida com ID: $newId")
     }
 
@@ -115,6 +120,14 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
         }
     }
 
+    fun formatDate(date: LocalDate): String {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        return date.format(formatter)
+    }
 
 
+    fun getNotesByDate(date: LocalDate): LiveData<List<Note>> {
+        val formattedDate = formatDate(date)
+        return repository.getNotesByDate(formattedDate)
+    }
 }

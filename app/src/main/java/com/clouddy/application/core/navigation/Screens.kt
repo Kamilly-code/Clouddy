@@ -22,3 +22,9 @@ object Pomodoro
 
 @Serializable
 object PomodoroScreen
+
+@Serializable
+object DayScreen
+
+@Serializable
+object Calendar

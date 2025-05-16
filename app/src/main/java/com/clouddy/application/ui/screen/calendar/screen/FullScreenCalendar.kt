@@ -1,8 +1,7 @@
-package com.clouddy.application.ui.screen.calendar
+package com.clouddy.application.ui.screen.calendar.screen
 
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,13 +38,12 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-import kotlin.toString
 
 @Composable
 fun FullScreenCalendar(
-    selectedDate: LocalDate?,
-    onDateSelected: (LocalDate) -> Unit
+    navigateToDayScreen: () -> Unit
 ) {
+    val selectedDate = remember { mutableStateOf<LocalDate?>(null) }
     val currentMonth = remember { mutableStateOf(YearMonth.now()) }
 
     val daysInMonth = currentMonth.value.lengthOfMonth()
@@ -129,7 +126,7 @@ fun FullScreenCalendar(
                         .size(120.dp)
                         .padding(4.dp),
                     shape = RoundedCornerShape(8.dp),
-                    elevation = 4.dp // Adiciona elevação para sombreamento
+                    elevation = 4.dp
                 ) {
                     Box(modifier = Modifier.fillMaxSize().background(Color.Gray))
                 }
@@ -140,14 +137,16 @@ fun FullScreenCalendar(
             items(daysInMonth) { index ->
                 val date = currentMonth.value.atDay(index + 1)
                 val isSelected = date == selectedDate
+                val isToday = date == LocalDate.now()
 
                 Card(
                     modifier = Modifier
                         .size(120.dp)
                         .padding(4.dp)
-                        .clickable { onDateSelected(date) },
+                        .clickable { navigateToDayScreen() },
                     shape = RoundedCornerShape(8.dp),
-                    elevation = 4.dp
+                    elevation = 4.dp,
+                    backgroundColor = if (isToday) Color.Cyan else Color.White
                 ) {
 
                     Box(
@@ -165,7 +164,7 @@ fun FullScreenCalendar(
                                 color = if (isSelected) Color.White else Color.Black
                             )
                             Text(
-                                text = "Evento", // Substitua por dados reais da programação
+                                text = "Evento",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray,
                                 textAlign = TextAlign.Center,

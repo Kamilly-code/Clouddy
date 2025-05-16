@@ -3,6 +3,7 @@ package com.clouddy.application.data.local.repository
 import android.R.attr.id
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
 import com.clouddy.application.core.utils.NetworkUtils
 import com.clouddy.application.data.local.dao.NoteDao
 import com.clouddy.application.data.local.entity.Note
@@ -34,6 +35,9 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
     suspend fun delete(note: Note) = withContext(Dispatchers.IO) {
         noteDao.delete(note)
     }
+
+    fun getNotesByDate(date: String): LiveData<List<Note>> =  noteDao.getNotesByDate(date)
+
 
     // Métodos auxiliares para manejar NoteItem en el ViewModel
     suspend fun insertNoteRemoteAndLocal(note: Note) = withContext(Dispatchers.IO) {

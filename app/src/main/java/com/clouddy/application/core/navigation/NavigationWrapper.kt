@@ -5,6 +5,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.clouddy.application.ui.screen.calendar.screen.DayScreen
+import com.clouddy.application.ui.screen.calendar.screen.FullScreenCalendar
 import com.clouddy.application.ui.screen.login.screen.LoginScreen
 import com.clouddy.application.ui.screen.login.screen.RegistroScreen
 import com.clouddy.application.ui.screen.home.HomeScreen
@@ -31,7 +33,8 @@ fun NavigationWrapper() {
                     navController.navigate(Login)},
                 navigateToNotes = { navController.navigate(Notes) },
                 navigateToPomodoro = { navController.navigate(Pomodoro) },
-                navigateToTask = { navController.navigate(Task)  }
+                navigateToTask = { navController.navigate(Task)  } ,
+                navigateToCalendar = { navController.navigate(Calendar)  }
             )
         }
 
@@ -57,6 +60,15 @@ fun NavigationWrapper() {
 
         composable<PomodoroScreen> {
             PomodoroScreen()
+        }
+
+        composable<Calendar> {
+            FullScreenCalendar( navigateToDayScreen = { navController.navigate(DayScreen) })
+        }
+
+        composable<DayScreen> { backStackEntry ->
+            DayScreen(  )
+
         }
 
     }

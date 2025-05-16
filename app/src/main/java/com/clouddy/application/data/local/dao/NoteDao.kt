@@ -1,5 +1,6 @@
 package com.clouddy.application.data.local.dao
 
+
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
@@ -36,5 +37,8 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes_table WHERE isUpdated = 1 ")
     suspend fun getUpdatedNotes(): List<Note>
+
+    @Query("SELECT * FROM notes_table WHERE date = :date")
+    fun getNotesByDate(date: String): LiveData<List<Note>>
 
 }

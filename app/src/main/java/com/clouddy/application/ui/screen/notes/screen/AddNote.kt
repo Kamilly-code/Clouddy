@@ -77,7 +77,7 @@ fun AddNote(
 
                         IconButton(onClick = {
                             if (title.isNotBlank() && content.isNotBlank()) {
-                                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                                val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                                 val newNote = Note(
                                     id = noteToEdit?.id,
                                     remoteId = noteToEdit?.remoteId ?: "",

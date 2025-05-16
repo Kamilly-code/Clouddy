@@ -1,6 +1,7 @@
 package com.clouddy.application.data.local.dao
 
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 interface TaskDao {
 
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
-    suspend fun insert(task: Task)
+    suspend fun insert(task: Task): Long
 
     @Delete
     suspend fun delete(task: Task)
@@ -24,5 +25,8 @@ interface TaskDao {
 
     @Query("SELECT * FROM task_table")
     fun getAllTasks(): Flow<List<Task>>
+
+    @Query("SELECT * FROM task_table WHERE date = :selectedDate")
+    fun getTasksByDate(selectedDate: String): LiveData<List<Task>>
 
 }

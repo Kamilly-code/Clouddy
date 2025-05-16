@@ -30,10 +30,13 @@ import com.clouddy.application.ui.screen.login.viewModel.AuthVM
 import com.example.clouddy.ui.theme.ClouddyTheme
 
 @Composable
-fun HomeScreen(navigateToLogin: () -> Unit,
-               navigateToNotes: () -> Unit,
-               navigateToTask: () -> Unit,
-               navigateToPomodoro: () -> Unit) {
+fun HomeScreen(
+    navigateToLogin: () -> Unit,
+    navigateToNotes: () -> Unit,
+    navigateToTask: () -> Unit,
+    navigateToPomodoro: () -> Unit,
+    navigateToCalendar: () -> Unit
+) {
     ClouddyTheme {
         val authVM: AuthVM = hiltViewModel()
         val authState = authVM.authState.observeAsState()
@@ -100,6 +103,14 @@ fun HomeScreen(navigateToLogin: () -> Unit,
                                     .height(48.dp)
                             ) {
                                 Text(text = "Task")
+                            }
+                            Button(
+                                onClick = { navigateToCalendar() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text(text = "Calendar")
                             }
                             Button(onClick = { authVM.signOut() },
                                 modifier = Modifier

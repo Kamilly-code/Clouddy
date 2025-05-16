@@ -10,7 +10,7 @@ data class Note(
     val remoteId: String? = null,
     @ColumnInfo(name = "title") val title: String? = " ",
     @ColumnInfo(name = "note") val note: String? = " ",
-    @ColumnInfo(name = "date") val date: String? = " ",
+    @ColumnInfo(name = "date") val date: String,
     val isSynced: Boolean = false,
     val isDeleted: Boolean = false,
     val isUpdated: Boolean = false
