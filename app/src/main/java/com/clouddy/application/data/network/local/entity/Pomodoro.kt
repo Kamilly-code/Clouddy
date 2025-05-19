@@ -1,4 +1,4 @@
-package com.clouddy.application.data.local.entity
+package com.clouddy.application.data.network.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -11,5 +11,6 @@ data class Pomodoro(
     @ColumnInfo(name = "focusTime") val focusTime: Int,
     @ColumnInfo(name = "shortBreakTime") val shortBreakTime: Int,
     @ColumnInfo(name = "longBreakTime") val longBreakTime: Int,
-    @ColumnInfo(name = "rounds") val rounds: Int
+    @ColumnInfo(name = "rounds") val rounds: Int,
+    @ColumnInfo(name = "totalMinutes") val totalMinutes: Int = 0
 )

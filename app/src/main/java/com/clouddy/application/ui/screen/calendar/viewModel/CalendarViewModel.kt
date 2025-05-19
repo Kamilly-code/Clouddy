@@ -4,10 +4,10 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.clouddy.application.data.local.dao.NoteDao
-import com.clouddy.application.data.local.dao.TaskDao
-import com.clouddy.application.data.local.entity.Note
-import com.clouddy.application.data.local.entity.Task
+import com.clouddy.application.data.network.local.dao.NoteDao
+import com.clouddy.application.data.network.local.dao.TaskDao
+import com.clouddy.application.data.network.local.entity.Note
+import com.clouddy.application.data.network.local.entity.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate

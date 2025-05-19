@@ -23,7 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.clouddy.application.data.local.entity.Note
+import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.ui.screen.notes.viewModel.NotesViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -38,12 +38,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.clouddy.application.R
 import com.clouddy.application.core.utils.NetworkUtils
-import com.clouddy.application.data.local.mapper.toNoteItem
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.notes.components.NoteItemView
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.collectAsState
-import com.clouddy.application.data.local.mapper.toNote
+import com.clouddy.application.data.network.local.mapper.toNote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

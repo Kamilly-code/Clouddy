@@ -34,7 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.clouddy.application.R
-import com.clouddy.application.data.local.entity.Note
+import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.ui.screen.notes.components.LinedTextField
 import com.clouddy.application.ui.screen.notes.viewModel.NotesViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme

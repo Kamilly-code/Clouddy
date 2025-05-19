@@ -1,8 +1,8 @@
-package com.clouddy.application.data.local.mapper
+package com.clouddy.application.data.network.local.mapper
 
 
 import com.clouddy.application.domain.model.NoteItem
-import com.clouddy.application.data.local.entity.Note
+import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.data.network.remote.note.NoteRequestDto
 
 

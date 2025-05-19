@@ -1,5 +1,6 @@
 package com.clouddy.application.ui.screen.toDo.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,9 +49,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.clouddy.application.R
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.toDo.viewModel.TaskViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
@@ -96,24 +100,35 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                 )
             },
             content = { paddingValues ->
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .draggable(
+                        state = dragState,
+                        orientation = Orientation.Horizontal,
+                        onDragStarted = { dragOffset.value = 0f },
+                        onDragStopped = { dragOffset.value = 0f; hasNavigated.value = false }
+                    )
+                ) {
+                    // Imagem de fundo
+                    Image(
+                        painter = painterResource(id = R.drawable.plants3),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(paddingValues)
                             .padding(16.dp)
-                            .draggable(
-                                state = dragState,
-                                orientation = Orientation.Horizontal,
-                                onDragStarted = { dragOffset.value = 0f },
-                                onDragStopped = { dragOffset.value = 0f; hasNavigated.value = false }
-                            )
                     ) {
 
                         Text(
                             text = "ToDo",
                             style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(bottom = 16.dp)
+                                .align(Alignment.CenterHorizontally)
                         )
 
                         LazyColumn (verticalArrangement = Arrangement.spacedBy(8.dp)) {

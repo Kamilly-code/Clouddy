@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.clouddy.ui.theme.ClouddyTheme
 import androidx.compose.foundation.lazy.items
-import com.clouddy.application.data.local.entity.Note
-import com.clouddy.application.data.local.mapper.toNoteItem
+import com.clouddy.application.data.network.local.entity.Note
+import com.clouddy.application.data.network.local.mapper.toNoteItem
 import com.clouddy.application.ui.screen.notes.components.NoteItemView
 
 

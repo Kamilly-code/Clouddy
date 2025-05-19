@@ -35,7 +35,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,10 +52,15 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.StickyNote2
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 
 @Composable
 fun HomeScreen(
@@ -90,6 +94,7 @@ fun HomeScreen(
         animationSpec = tween(600)
     )
 
+
     ClouddyTheme {
         Scaffold { padding ->
             Row(
@@ -97,7 +102,7 @@ fun HomeScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .drawBehind {
-                        val dotColor = Color(0xFFE0E0E0)
+                        val dotColor = Color(0xFF0D2B4B)
                         val spacing = 40f
                         val dotRadius = 3f
                         val columns = (size.width / spacing).toInt()
@@ -128,18 +133,37 @@ fun HomeScreen(
                 ) {
                     iconItems.forEach { (icon, index) ->
                         IconButton(onClick = { selectedIndex = index }) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(
+                                        color = Color(0xFF00BCD4),
+                                        shape = RoundedCornerShape(50)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
                             Icon(imageVector = icon, contentDescription = null)
+                            }
                         }
                     }
                 }
 
-                // Stack de cards com efeito de rotação
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
+
+
+                    Image(
+                        painter = painterResource(id = R.drawable.mao_trabajo),
+                        contentDescription = "Decorativo",
+                        modifier = Modifier
+                            .size(600.dp)
+                            .align  (Alignment.BottomEnd)
+                            .zIndex(2f)
+                    )
                     cards.forEachIndexed { index, label ->
                         val isVisible = index == selectedIndex
                         val offset = (index - selectedIndex) * 10
@@ -186,7 +210,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // Sair
                     IconButton(
                         onClick = { authVM.signOut() },
                         modifier = Modifier

@@ -88,7 +88,10 @@ dependencies {
     implementation(libs.kalendar)
     implementation(libs.kalendar.foundation)
 
-
+    //coil
+    implementation(libs.coil)
+    implementation(libs.coil.svg)
+    //
     // Architecture Components
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)

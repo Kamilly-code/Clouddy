@@ -1,13 +1,9 @@
-package com.clouddy.application.data.local.repository
+package com.clouddy.application.data.network.local.repository
 
-import android.R.attr.id
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
-import com.clouddy.application.core.utils.NetworkUtils
-import com.clouddy.application.data.local.dao.NoteDao
-import com.clouddy.application.data.local.entity.Note
-import com.clouddy.application.data.local.mapper.toNote
+import com.clouddy.application.data.network.local.dao.NoteDao
+import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.data.network.remote.note.NoteRequestDto
 import com.clouddy.application.data.network.remote.note.NotesApiService
 import dagger.hilt.android.scopes.ViewModelScoped

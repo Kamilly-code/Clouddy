@@ -1,4 +1,4 @@
-package com.clouddy.application.data.local.dao
+package com.clouddy.application.data.network.local.dao
 
 
 import androidx.lifecycle.LiveData
@@ -8,7 +8,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.clouddy.application.data.local.entity.Note
+import com.clouddy.application.data.network.local.entity.Note
 import kotlinx.coroutines.flow.Flow
 
 @Dao

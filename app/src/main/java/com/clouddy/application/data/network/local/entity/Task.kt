@@ -1,4 +1,4 @@
-package com.clouddy.application.data.local.entity
+package com.clouddy.application.data.network.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

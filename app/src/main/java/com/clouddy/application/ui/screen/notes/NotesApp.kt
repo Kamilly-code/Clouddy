@@ -17,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.clouddy.application.data.local.entity.Note
+import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.ui.screen.notes.screen.AddNote
 import com.clouddy.application.ui.screen.notes.screen.NotesListScreen
 import com.clouddy.application.ui.screen.notes.viewModel.NotesViewModel

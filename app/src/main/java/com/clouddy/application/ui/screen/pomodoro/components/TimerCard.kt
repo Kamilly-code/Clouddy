@@ -21,15 +21,18 @@ fun TimerCard(
     value: Float,
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float> = 0f..60f,
-    unit: String = "min"
+    unit: String = "min",
+    modifier: Modifier = Modifier
 ) {
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
             .height(175.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.24f)
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = title, style = MaterialTheme.typography.titleMedium)
@@ -45,8 +48,8 @@ fun TimerCard(
                 onValueChange = onValueChange,
                 valueRange = valueRange,
                 colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFF6D6DFF),
-                    activeTrackColor = Color(0xFF6D6DFF),
+                    thumbColor = Color(0xFF000000),
+                    activeTrackColor = Color(0xFF000000),
                     inactiveTrackColor = Color(0xFFE0DDFE)
                 )
             )

@@ -1,9 +1,12 @@
 package com.clouddy.application.ui.screen.pomodoro.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -20,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,11 +45,25 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
 
     // entidades do room
     var focusTime by remember(settings) { mutableFloatStateOf(settings?.focusTime?.toFloat() ?: 25f) }
-    var shortBreak by remember(settings) { mutableFloatStateOf(settings?.shortBreakTime?.toFloat() ?: 25f) }
-    var longBreak by remember(settings) { mutableFloatStateOf(settings?.longBreakTime?.toFloat() ?: 25f) }
-    var rounds by remember(settings) { mutableFloatStateOf(settings?.rounds?.toFloat() ?: 25f) }
+    var shortBreak by remember(settings) { mutableFloatStateOf(settings?.shortBreakTime?.toFloat() ?: 5f) }
+    var longBreak by remember(settings) { mutableFloatStateOf(settings?.longBreakTime?.toFloat() ?: 15f) }
+    var rounds by remember(settings) { mutableFloatStateOf(settings?.rounds?.toFloat() ?: 4f) }
 
     ClouddyTheme {
+        Scaffold(content = { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF2677B0),
+                                Color(0xFF10324A)
+                            )
+                        )
+                    )
+                    .padding(paddingValues)
+            ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -52,17 +72,17 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
             TimerCard(
                 title = "Focus",
                 value = focusTime,
-                onValueChange = { focusTime = it }
+                onValueChange = { focusTime = it },
             )
             TimerCard(
                 title = "Short break",
                 value = shortBreak,
-                onValueChange = { shortBreak = it }
+                onValueChange = { shortBreak = it },
             )
             TimerCard(
                 title = "Long break",
                 value = longBreak,
-                onValueChange = { longBreak = it }
+                onValueChange = { longBreak = it },
             )
             TimerCard(
                 title = "Rounds",
@@ -72,7 +92,7 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
                 unit = "rounds"
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(1.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -88,7 +108,7 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
                     shape = RoundedCornerShape(30.dp),
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
                 ) {
-                    Text("Reset", color = Color.White, fontSize = 18.sp)
+                    Text("RESETAR", color = Color.White, fontSize = 18.sp)
                 }
 
                 Button(
@@ -100,7 +120,7 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
                                 longBreakTime = longBreak.toInt(),
                                 rounds = rounds.toInt()
                             ) {
-                                navigateToPomodoroScreen?.invoke() // Navega após salvar
+                                navigateToPomodoroScreen?.invoke()
                             }
                         }
                     },
@@ -110,8 +130,12 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
                     shape = RoundedCornerShape(30.dp),
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black)
                 ) {
-                    Text("OK", color = Color.White, fontSize = 18.sp)
-                }}
+                    Text("SALVAR", color = Color.White, fontSize = 18.sp)
+                }
+            }
+        }
         }
     }
+)
+}
 }

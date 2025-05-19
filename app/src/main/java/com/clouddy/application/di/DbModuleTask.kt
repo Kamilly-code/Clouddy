@@ -3,8 +3,8 @@ package com.clouddy.application.di
 import android.content.Context
 import androidx.room.Room
 import com.clouddy.application.core.utils.DATABASE_TASK
-import com.clouddy.application.data.local.dao.TaskDao
-import com.clouddy.application.data.local.db.TaskDatabase
+import com.clouddy.application.data.network.local.dao.TaskDao
+import com.clouddy.application.data.network.local.db.TaskDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

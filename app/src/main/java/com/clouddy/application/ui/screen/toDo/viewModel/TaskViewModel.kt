@@ -4,14 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.clouddy.application.data.local.entity.Task
-import com.clouddy.application.data.local.repository.TaskRepository
+import com.clouddy.application.data.network.local.entity.Task
+import com.clouddy.application.data.network.local.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.text.insert
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(private val repository : TaskRepository) : ViewModel(){

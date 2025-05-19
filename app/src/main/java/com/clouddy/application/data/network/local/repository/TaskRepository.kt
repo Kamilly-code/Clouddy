@@ -1,10 +1,8 @@
-package com.clouddy.application.data.local.repository
+package com.clouddy.application.data.network.local.repository
 
 import androidx.lifecycle.LiveData
-import com.clouddy.application.data.local.dao.TaskDao
-import com.clouddy.application.data.local.entity.Note
-import com.clouddy.application.data.local.entity.Task
-import kotlinx.coroutines.flow.Flow
+import com.clouddy.application.data.network.local.dao.TaskDao
+import com.clouddy.application.data.network.local.entity.Task
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -37,6 +37,8 @@ import kotlinx.coroutines.delay
 fun PomodoroScreen() {
     val viewModel: PomodoroViewModel = hiltViewModel()
     val settings by viewModel.pomodoroSettings.collectAsState()
+    val currentRound by viewModel.currentRound.collectAsState()
+    val isCycleFinished by viewModel.isCycleFinished.collectAsState()
     if (settings == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -55,7 +57,7 @@ fun PomodoroScreen() {
     val totalRounds = settings!!.rounds
 
     var timeLeft by remember { mutableIntStateOf(focusTime) }
-    var currentRound by remember { mutableIntStateOf(1) }
+
     var phase by remember { mutableStateOf("Focus") }
 
     // Timer
@@ -67,12 +69,13 @@ fun PomodoroScreen() {
             } else {
                 when (phase) {
                     "Focus" -> {
+                        viewModel.onPomodoroCompleted()
+
                         phase = if (currentRound % totalRounds == 0) "Long Break" else "Short Break"
                         timeLeft = if (phase == "Long Break") longBreak else shortBreak
                     }
                     "Short Break", "Long Break" -> {
-                        currentRound++
-                        if (currentRound <= totalRounds) {
+                        if (currentRound < totalRounds) {
                             phase = "Focus"
                             timeLeft = focusTime
                         } else {
@@ -120,7 +123,8 @@ fun PomodoroScreen() {
 
                 Spacer(modifier = Modifier.height(16.dp))
                 IconButton(
-                    onClick = { isRunning = !isRunning },
+                    onClick = {if (!isRunning) viewModel.onPlayPressed()
+                        isRunning = !isRunning },
                     modifier = Modifier.size(48.dp)
                 ) {
                     if (isRunning) {
@@ -137,6 +141,11 @@ fun PomodoroScreen() {
                         )
                     }
                 }
+                if (isCycleFinished) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Ciclo completo! 🎉", color = Color.Green)
+                }
+
             }
         }
     }
