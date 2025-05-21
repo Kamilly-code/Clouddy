@@ -1,14 +1,18 @@
 package com.clouddy.application.ui.screen.pomodoro.screen
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -22,7 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -88,16 +94,49 @@ fun PomodoroScreen() {
     }
 
     ClouddyTheme {
+        Scaffold { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF2677B0)  ,
+                            Color(0xFF10324A)
+                        )
+                    )
+                )
+                .padding(paddingValues)
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.full_nube),
+                contentDescription = "Imagem decorativa",
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.5f),
+                                Color(0xFF00042A).copy(alpha = 0.5f)
+                            )
+                        )
+                    )
+            )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize()
             ) {
-                Text(text = "$currentRound/$totalRounds")
+
+                Text(text = "$currentRound/$totalRounds",color = Color.White)
                 Spacer(modifier = Modifier.height(20.dp))
+
+
 
                 Box(contentAlignment = Alignment.Center) {
                     MoonProgress(
@@ -131,13 +170,13 @@ fun PomodoroScreen() {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_pause),
                             contentDescription = "Pause",
-                            tint = Color.Black
+                            tint = Color.White
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = "Start",
-                            tint = Color.Black
+                            tint = Color.White
                         )
                     }
                 }
@@ -149,4 +188,5 @@ fun PomodoroScreen() {
             }
         }
     }
+}
 }

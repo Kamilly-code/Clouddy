@@ -73,21 +73,25 @@ fun PomodoroList(navigateToPomodoroScreen: (() -> Unit)? = null) {
                 title = "Focus",
                 value = focusTime,
                 onValueChange = { focusTime = it },
+                modifier = Modifier.weight(1f)
             )
             TimerCard(
                 title = "Short break",
                 value = shortBreak,
                 onValueChange = { shortBreak = it },
+                modifier = Modifier.weight(1f)
             )
             TimerCard(
                 title = "Long break",
                 value = longBreak,
                 onValueChange = { longBreak = it },
+                modifier = Modifier.weight(1f)
             )
             TimerCard(
                 title = "Rounds",
                 value = rounds,
                 onValueChange = { rounds = it },
+                modifier = Modifier.weight(1f),
                 valueRange = 1f..10f,
                 unit = "rounds"
             )

@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.accompanist.navigation.animation)
     implementation(libs.accompanist.pager)
     implementation(libs.accompanist.pager.indicators)
+    implementation(libs.accompanist.systemuicontroller)
 
     // Room
     implementation(libs.room.runtime)
