@@ -7,6 +7,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.clouddy.application.data.network.local.entity.Task
 import kotlinx.coroutines.flow.Flow
 
@@ -28,5 +29,18 @@ interface TaskDao {
 
     @Query("SELECT * FROM task_table WHERE date = :selectedDate")
     fun getTasksByDate(selectedDate: String): LiveData<List<Task>>
+
+    @Query("SELECT * FROM task_table WHERE isSynced = 0")
+    suspend fun getAllUnsyncedTasks(): List<Task>
+
+    @Query("SELECT * FROM task_table WHERE isUpdated = 1")
+    suspend fun getAllUpdatedTasks(): List<Task>
+
+    @Query("SELECT * FROM task_table WHERE isDeleted = 1")
+    suspend fun getAllDeletedTasks(): List<Task>
+
+    @Update
+    suspend fun updateFull(task: Task)
+
 
 }

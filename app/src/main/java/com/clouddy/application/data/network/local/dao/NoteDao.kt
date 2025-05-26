@@ -39,6 +39,6 @@ interface NoteDao {
     suspend fun getUpdatedNotes(): List<Note>
 
     @Query("SELECT * FROM notes_table WHERE date = :date")
-    fun getNotesByDate(date: String): LiveData<List<Note>>
+    fun getNotesByDate(date: String): Flow<List<Note>>
 
 }

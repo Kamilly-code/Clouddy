@@ -1,6 +1,7 @@
 package com.clouddy.application.di
 
 import com.clouddy.application.data.network.remote.note.NotesApiService
+import com.clouddy.application.data.network.remote.task.TaskApiService
 import com.clouddy.application.data.network.remote.user.ApiService
 import dagger.Module
 import dagger.Provides
@@ -44,6 +45,12 @@ object NetworkModule {
     @Singleton
     fun provideNotesApiService(retrofit: Retrofit): NotesApiService {
         return retrofit.create(NotesApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTaskApiService(retrofit: Retrofit): TaskApiService {
+        return retrofit.create(TaskApiService::class.java)
     }
 
 }

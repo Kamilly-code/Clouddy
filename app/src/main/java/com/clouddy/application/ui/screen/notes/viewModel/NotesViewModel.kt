@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.clouddy.application.core.utils.NetworkUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -125,7 +126,7 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
     }
 
 
-    fun getNotesByDate(date: LocalDate): LiveData<List<Note>> {
+    fun getNotesByDate(date: LocalDate): Flow<List<Note>> {
         val formattedDate = formatDate(date)
         return repository.getNotesByDate(formattedDate)
     }

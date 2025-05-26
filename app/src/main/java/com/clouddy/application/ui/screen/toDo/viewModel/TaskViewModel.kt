@@ -46,6 +46,4 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository)
         return repository.getTasksByDate(formattedDate)
     }
 
-
-
 }

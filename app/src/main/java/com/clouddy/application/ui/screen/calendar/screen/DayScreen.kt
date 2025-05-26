@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -58,7 +59,7 @@ fun DayScreen() {
     val selectedDate = remember { mutableStateOf(LocalDate.now()) }
 
     // Observar as notas e tarefas com base no selectedDate
-    val notes by calendarViewModel.getNotesForDate(selectedDate.value).observeAsState(emptyList())
+    val notes by calendarViewModel.getNotesForDate(selectedDate.value).collectAsState(emptyList())
     val tasks by calendarViewModel.getTasksForDate(selectedDate.value).observeAsState(emptyList())
 
     val gradientBrush = Brush.verticalGradient(

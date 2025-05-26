@@ -32,7 +32,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         noteDao.delete(note)
     }
 
-    fun getNotesByDate(date: String): LiveData<List<Note>> =  noteDao.getNotesByDate(date)
+    fun getNotesByDate(date: String): Flow<List<Note>> =  noteDao.getNotesByDate(date)
 
 
     // Métodos auxiliares para manejar NoteItem en el ViewModel
@@ -55,7 +55,6 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
             }
         } catch (e: Exception) {
             Log.e("API", "Erro ao conectar com servidor: ${e.message}")
-            // Continua salva localmente com isSynced = false
         }
     }
 
@@ -74,7 +73,6 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
                     noteDao.updateNote(note.copy(isSynced = false, isUpdated = true))
                 }
             } else {
-                // Não tem remoteId, mas deve ser salva localmente como atualizada
                 noteDao.updateNote(note.copy(isSynced = false, isUpdated = true))
             }
         } catch (e: Exception) {
@@ -89,14 +87,13 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
             if (note.remoteId != null && note.remoteId.isNotEmpty()) {
                 val response = api.deleteNote(note.remoteId)
                 if (response.isSuccessful) {
-                    noteDao.delete(note) // Deleta do Room definitivamente
+                    noteDao.delete(note)
                 } else {
                     Log.e("API", "Erro ao deletar no servidor: ${response.message()}")
                     val markedNote = note.copy(isDeleted = true, isSynced = false)
                     noteDao.updateNote(markedNote)
                 }
             } else {
-                // Não tem remoteId → marca como deletada e sincroniza depois
                 val markedNote = note.copy(isDeleted = true, isSynced = false)
                 noteDao.updateNote(markedNote)
             }

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -150,33 +151,12 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                             .fillMaxWidth()
                                             .padding(16.dp)
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(24.dp)
-                                                .border(
-                                                    2.dp,
-                                                    if (task.isCompleted) Color.Gray else Color.Black,
-                                                    shape = RoundedCornerShape(4.dp)
-                                                )
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .background(
-                                                    if (task.isCompleted) Color.Gray
-                                                    else Color.Transparent
-                                                )
-                                                .clickable {
-                                                    viewModel.storeTaskCompletation(task)
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ){
-                                            if (task.isCompleted) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Check,
-                                                    contentDescription = "Tarea hecha",
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(16.dp)
-                                                )
+                                        Checkbox(
+                                            checked = task.isCompleted,
+                                            onCheckedChange = {
+                                                viewModel.storeTaskCompletation(task)
                                             }
-                                        }
+                                        )
 
                                         Spacer(modifier = Modifier.width(12.dp))
 

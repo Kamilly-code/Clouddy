@@ -9,6 +9,7 @@ import com.clouddy.application.data.network.local.dao.TaskDao
 import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.data.network.local.entity.Task
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -25,7 +26,7 @@ class CalendarViewModel @Inject constructor(
         return date.format(formatter)
     }
 
-    fun getNotesForDate(date: LocalDate): LiveData<List<Note>> {
+    fun getNotesForDate(date: LocalDate):Flow<List<Note>> {
         val formattedDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
         Log.d("CalendarViewModel", "Buscando notas para data: $formattedDate")
         return noteDao.getNotesByDate(formattedDate)
