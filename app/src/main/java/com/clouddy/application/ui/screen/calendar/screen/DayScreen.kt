@@ -60,7 +60,7 @@ fun DayScreen() {
 
     // Observar as notas e tarefas com base no selectedDate
     val notes by calendarViewModel.getNotesForDate(selectedDate.value).collectAsState(emptyList())
-    val tasks by calendarViewModel.getTasksForDate(selectedDate.value).observeAsState(emptyList())
+    val tasks by calendarViewModel.getTasksForDate(selectedDate.value).collectAsState(emptyList())
 
     val gradientBrush = Brush.verticalGradient(
         colors = listOf(

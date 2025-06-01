@@ -40,6 +40,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -51,20 +52,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.clouddy.application.R
+import com.clouddy.application.data.network.local.entity.Task
+import com.clouddy.application.data.network.local.mapper.toTask
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.toDo.viewModel.TaskViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
     val viewModel: TaskViewModel = hiltViewModel()
-    val tasks by viewModel.tasks.observeAsState(emptyList())
+    val tasks by viewModel.tasks.collectAsState(initial = emptyList())
 
     var showAddTaskSheet by remember { mutableStateOf(false) }
     var newTaskText by remember { mutableStateOf("") }
@@ -74,10 +79,22 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
     val dragOffset = remember { mutableStateOf(0f) } // Offset de arrastre
     val dragThreshold = 100f // Umbral de arrastre para activar la navegación
     val hasNavigated = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val backendOnline by viewModel.isBackendOnline.collectAsState()
+
 
     val dragState = rememberDraggableState { delta ->
         dragOffset.value += delta
     }
+
+
+
+    LaunchedEffect(Unit) {
+        viewModel.checkAndSyncBackend()
+        viewModel.syncAllTasks()
+    }
+
 
     //Efecto de la navegacion de arrastre/drag para la derecha
     LaunchedEffect(dragOffset.value) {
@@ -133,7 +150,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                         )
 
                         LazyColumn (verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(tasks, key = { it.id }) { task ->
+                            items(tasks, key = { it.id ?: 0L }) { task ->
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -154,7 +171,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                         Checkbox(
                                             checked = task.isCompleted,
                                             onCheckedChange = {
-                                                viewModel.storeTaskCompletation(task)
+                                                viewModel.storeTaskCompletation(task.toTask())
                                             }
                                         )
 
@@ -169,7 +186,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                             )
                                         )
 
-                                        IconButton(onClick = { viewModel.removeTask(task) }) {
+                                        IconButton(onClick = {viewModel.removeTask(task.toTask(), context)}) {
                                             Icon(
                                                 Icons.Default.Delete,
                                                 contentDescription = "Eliminar tareas"
@@ -205,7 +222,18 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                 Button(
                                     onClick = {
                                         if (newTaskText.isNotBlank()) {
-                                            viewModel.addTask(newTaskText)
+                                            val formattedDate = viewModel.formatDate(LocalDate.now())
+                                            val task = Task(
+                                                id = null,
+                                                remoteId = null,
+                                                task = newTaskText,
+                                                date = formattedDate,
+                                                isCompleted = false,
+                                                isSynced = false,
+                                                isDeleted = false,
+                                                isUpdated = false
+                                            )
+                                            viewModel.addTask(task)
                                             newTaskText = ""
                                             showAddTaskSheet = false
                                         }

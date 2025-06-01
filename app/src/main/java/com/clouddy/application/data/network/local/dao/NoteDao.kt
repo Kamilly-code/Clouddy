@@ -19,6 +19,9 @@ interface NoteDao {
     @Delete
     suspend fun delete(note: Note)
 
+    @Update
+    suspend fun updateNote(note: Note)
+
 
     @Query("SELECT * FROM notes_table WHERE isDeleted = 0")
     fun getAllNotes(): Flow<List<Note>>
@@ -29,8 +32,6 @@ interface NoteDao {
     @Query("SELECT * FROM notes_table WHERE isSynced = 0 AND isDeleted = 0")
     suspend fun getUnsyncedNotes(): List<Note>
 
-    @Update
-    suspend fun updateNote(note: Note)
 
     @Query("SELECT * FROM notes_table WHERE isDeleted = 1")
     suspend fun getDeletedNotes(): List<Note>
@@ -40,5 +41,6 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes_table WHERE date = :date")
     fun getNotesByDate(date: String): Flow<List<Note>>
+
 
 }

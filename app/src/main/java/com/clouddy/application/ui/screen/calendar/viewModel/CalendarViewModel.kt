@@ -32,7 +32,7 @@ class CalendarViewModel @Inject constructor(
         return noteDao.getNotesByDate(formattedDate)
     }
 
-    fun getTasksForDate(date: LocalDate): LiveData<List<Task>> {
+    fun getTasksForDate(date: LocalDate): Flow<List<Task>> {
         val formattedDate = formatDate(date)
         return taskDao.getTasksByDate(formattedDate)
     }
@@ -40,7 +40,7 @@ class CalendarViewModel @Inject constructor(
     fun updateTaskCompletion(task: Task) {
         viewModelScope.launch {
             task.id?.let { taskId ->
-                taskDao.update(taskId, !task.isCompleted)
+                taskDao.updateFull(task)
             }
         }
     }
