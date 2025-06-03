@@ -45,6 +45,7 @@ fun PomodoroScreen() {
     val settings by viewModel.pomodoroSettings.collectAsState()
     val currentRound by viewModel.currentRound.collectAsState()
     val isCycleFinished by viewModel.isCycleFinished.collectAsState()
+
     if (settings == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -57,6 +58,7 @@ fun PomodoroScreen() {
 
     var isRunning by remember { mutableStateOf(false) }
 
+    settings?.let { safeSettings ->
     val focusTime = (settings!!.focusTime) * 60
     val shortBreak = (settings!!.shortBreakTime) * 60
     val longBreak = (settings!!.longBreakTime) * 60
@@ -189,4 +191,5 @@ fun PomodoroScreen() {
         }
     }
 }
+        }
 }
