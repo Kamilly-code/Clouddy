@@ -69,33 +69,33 @@ fun PomodoroScreen() {
     var phase by remember { mutableStateOf("Focus") }
 
     // Timer
-    LaunchedEffect(isRunning, timeLeft) {
-        if (isRunning) {
-            if (timeLeft > 0) {
-                delay(1000L)
-                timeLeft -= 1
-            } else {
-                when (phase) {
-                    "Focus" -> {
-                        viewModel.onPomodoroCompleted()
-
-                        phase = if (currentRound % totalRounds == 0) "Long Break" else "Short Break"
-                        timeLeft = if (phase == "Long Break") longBreak else shortBreak
-                    }
-                    "Short Break", "Long Break" -> {
-                        if (currentRound < totalRounds) {
-                            phase = "Focus"
-                            timeLeft = focusTime
-                        } else {
-                            isRunning = false
+        LaunchedEffect(isRunning, timeLeft) {
+            if (isRunning) {
+                if (timeLeft > 0) {
+                    delay(1000L)
+                    timeLeft -= 1
+                } else {
+                    when (phase) {
+                        "Focus" -> {
+                            viewModel.onPomodoroCompleted(false)
+                            // Decide qual break mostrar baseado no round atual
+                            phase = if ((currentRound + 1) >= totalRounds) "Long Break" else "Short Break"
+                            timeLeft = if (phase == "Long Break") longBreak else shortBreak
+                        }
+                        "Short Break", "Long Break" -> {
+                            viewModel.onPomodoroCompleted(true)
+                            if (!isCycleFinished) {
+                                phase = "Focus"
+                                timeLeft = focusTime
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    ClouddyTheme {
+
+        ClouddyTheme {
         Scaffold { paddingValues ->
         Box(
             modifier = Modifier
@@ -135,7 +135,7 @@ fun PomodoroScreen() {
                         modifier = Modifier.fillMaxSize()
             ) {
 
-                Text(text = "$currentRound/$totalRounds",color = Color.White)
+                Text(text = "${currentRound}/$totalRounds", color = Color.White)
                 Spacer(modifier = Modifier.height(20.dp))
 
 
@@ -191,5 +191,5 @@ fun PomodoroScreen() {
         }
     }
 }
-        }
+}
 }

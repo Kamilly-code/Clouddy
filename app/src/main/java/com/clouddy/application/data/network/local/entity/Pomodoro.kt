@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.clouddy.application.core.utils.pomodoro.PomodoroState
+import java.time.LocalDate
 
 
 @Entity(tableName = "pomodoro_table")
@@ -14,6 +15,7 @@ data class Pomodoro(
     @ColumnInfo(name = "longBreakTime") val longBreakTime: Int,
     @ColumnInfo(name = "rounds") val rounds: Int,
     @ColumnInfo(name = "totalMinutes") val totalMinutes: Int = 0,
-    @ColumnInfo(name = "currentState") val currentState: PomodoroState = PomodoroState.IDLE ,
-    @ColumnInfo(name = "currentRound") val currentRound: Int = 1
+    @ColumnInfo(name = "currentState") val currentState: PomodoroState = PomodoroState.IDLE,
+    @ColumnInfo(name = "currentRound") val currentRound: Int = 0,
+    val lastUpdatedDate: String? = LocalDate.now().toString()
 )

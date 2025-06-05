@@ -6,4 +6,6 @@ data class PomodoroResponseDto(val id: Long,
                                val longBreakTime: Int,
                                val rounds: Int,
                                val totalMinutes: Int,
-                               val currentState: String)
+                               val currentState: String,
+                               val currentRound: Int,
+                               val lastUpdatedDate: String)
