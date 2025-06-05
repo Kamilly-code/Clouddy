@@ -40,6 +40,9 @@ class PomodoroViewModel @Inject constructor(
     private val _isInBreak = MutableStateFlow(false)
     val isInBreak: StateFlow<Boolean> = _isInBreak
 
+    private val _shouldStopTimer = MutableStateFlow(false)
+    val shouldStopTimer: StateFlow<Boolean> = _shouldStopTimer
+
     init {
         viewModelScope.launch {
             repository.initFocusTimeIfNeedes()
@@ -92,57 +95,85 @@ class PomodoroViewModel @Inject constructor(
     }
 
     fun onPomodoroCompleted(isBreak: Boolean) {
-        viewModelScope.launch {
-            val settings = _pomodoroSettings.value ?: return@launch
-            val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+            viewModelScope.launch {
+                val settings = _pomodoroSettings.value ?: return@launch
+                val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
-            if (!isBreak) {
-                // Terminou o foco
-                val updated = settings.copy(
-                    totalMinutes = settings.totalMinutes + settings.focusTime,
-                    lastUpdatedDate = today
-                )
-                repository.updatePomodoro(updated)
-                _pomodoroSettings.value = updated
+                if (!isBreak) {
+                    // Terminou o foco - incrementa totalMinutes
+                    val updated = settings.copy(
+                        totalMinutes = settings.totalMinutes + settings.focusTime,
+                        lastUpdatedDate = today
+                    )
+                    repository.updatePomodoro(updated)
+                    _pomodoroSettings.value = updated
 
-                // Decide qual break iniciar
-                val isLastRound = (settings.currentRound + 1 >= settings.rounds)
-                val nextState = if (isLastRound) PomodoroState.LONG_BREAK else PomodoroState.SHORT_BREAK
-                updateCurrentState(nextState)
-                _isInBreak.value = true
-            } else {
-                // Terminou o break - incrementa o round
-                val nextRound = (settings.currentRound + 1) % (settings.rounds + 1)
-                val updated = settings.copy(
-                    currentRound = nextRound,
-                    currentState = PomodoroState.FOCUS,
-                    lastUpdatedDate = today
-                )
-                repository.updatePomodoro(updated)
-                _pomodoroSettings.value = updated
-                _currentRound.value = nextRound
-                _isInBreak.value = false
-                _isCycleFinished.value = (nextRound >= settings.rounds)
+                    // Não incrementa o round aqui - só depois do break
+                    val isLastRound = (settings.currentRound + 1 >= settings.rounds)
+                    val nextState = if (isLastRound) PomodoroState.LONG_BREAK else PomodoroState.SHORT_BREAK
+                    updateCurrentState(nextState)
+                    _isInBreak.value = true
+                } else {
+                    // Terminou o break - incrementa o round
+                    val nextRound = settings.currentRound + 1
+                    val updated = settings.copy(
+                        currentRound = nextRound,
+                        currentState = if (nextRound <= settings.rounds) PomodoroState.FOCUS else PomodoroState.IDLE,
+                        lastUpdatedDate = today
+                    )
+                    repository.updatePomodoro(updated)
+                    _pomodoroSettings.value = updated
+                    _currentRound.value = nextRound
+                    _isInBreak.value = false
+
+                    val cycleComplete = (nextRound > settings.rounds)
+                    _isCycleFinished.value = cycleComplete
+                    _shouldStopTimer.value = cycleComplete
+
+                    if (cycleComplete) {
+                        // Reseta para novo ciclo
+                        val resetSettings = updated.copy(
+                            currentRound = 0,
+                            currentState = PomodoroState.IDLE
+                        )
+                        repository.updatePomodoro(resetSettings)
+                        _pomodoroSettings.value = resetSettings
+                        _currentRound.value = 0
+                }
             }
         }
     }
+
 
 
     fun onPlayPressed() {
         viewModelScope.launch {
-            val totalRounds = _pomodoroSettings.value?.rounds ?: return@launch
-            if (_currentRound.value >= totalRounds) {
-                Log.d("PomodoroViewModel", "Ciclo completo. Reinicie para começar de novo.")
-                return@launch
+            val settings = _pomodoroSettings.value ?: return@launch
+
+            // Se for reinício, reseta para round 0
+            if (_isCycleFinished.value) {
+                val updated = settings.copy(
+                    currentRound = 0,
+                    currentState = PomodoroState.FOCUS
+                )
+                repository.updatePomodoro(updated)
+                _pomodoroSettings.value = updated
+                _currentRound.value = 0
+                _isCycleFinished.value = false
             }
 
-            // Aqui inicia o temporizador (mas NÃO incrementa round ainda!)
             Log.d("PomodoroViewModel", "Iniciando round ${_currentRound.value + 1}")
         }
     }
 
+
     fun resetRounds() {
         _currentRound.value = 0
+        _isCycleFinished.value = false
+    }
+
+    fun resetCycle() {
+        _shouldStopTimer.value = false
         _isCycleFinished.value = false
     }
 
