@@ -1,7 +1,9 @@
 package com.clouddy.application.data.network.local.repository
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
+import com.clouddy.application.PreferencesManager
 import com.clouddy.application.data.network.local.dao.NoteDao
 import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.data.network.remote.note.NoteRequestDto
@@ -13,12 +15,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.flow.flowOf
 
 @ViewModelScoped
 class NotesRepository @Inject constructor(private val noteDao: NoteDao,
-                                          private val api: NotesApiService) {
+                                          private val api: NotesApiService,
+                                          private val preferencesManager: PreferencesManager) {
 
-    val allNotes : Flow<List<Note>> = noteDao.getAllNotes()
+    fun getAllNotes(): Flow<List<Note>> {
+        val userId = preferencesManager.getUserId() ?: return flowOf(emptyList<Note>())
+        return noteDao.getAllNotes(userId)
+    }
 
     suspend fun insert(note: Note) = withContext(Dispatchers.IO) {
         noteDao.insertNewNote(note)
@@ -32,15 +39,16 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         noteDao.delete(note)
     }
 
-    fun getNotesByDate(date: String): Flow<List<Note>> =  noteDao.getNotesByDate(date)
+    fun getNotesByDate(date: String, userId: String): Flow<List<Note>> =  noteDao.getNotesByDate(date, userId)
 
 
     // Métodos auxiliares para manejar NoteItem en el ViewModel
     suspend fun insertNoteRemoteAndLocal(note: Note) = withContext(Dispatchers.IO) {
+        val userId = preferencesManager.getUserId() ?: throw Exception("User not authenticated")
         val localId = noteDao.insertNewNote(note.copy(isSynced = false))
 
         try {
-            val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "")
+            val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId)
             val response = api.insertNote(dto)
 
             if (response.isSuccessful) {
@@ -48,6 +56,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
                     val updated = note.copy(
                         id = localId,
                         remoteId = savedNote.id.toString(),
+                        userId = userId,
                         isSynced = true
                     )
                     noteDao.updateNote(updated)
@@ -60,11 +69,13 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
 
     suspend fun updateNoteRemoteAndLocal(note: Note) = withContext(Dispatchers.IO) {
+        val userId = preferencesManager.getUserId() ?: return@withContext
+        val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId ?: "", userId)
         if (note.id == null) return@withContext
 
         try {
             if (!note.remoteId.isNullOrEmpty()) {
-                val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId)
+                val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId = note.userId)
                 val response = api.updateNote(note.remoteId, dto)
 
                 if (response.isSuccessful) {
@@ -120,15 +131,15 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         }
     }
 
-    suspend fun syncNotesWithServer() = withContext(Dispatchers.IO) {
+    suspend fun syncNotesWithServer(userId: String) = withContext(Dispatchers.IO) {
         // 1. Sincronizar notas que foram criadas offline (sem remoteId)
-        val unsyncedNotes = noteDao.getUnsyncedNotes().filter { !it.isDeleted }
+        val unsyncedNotes = noteDao.getUnsyncedNotes(userId).filter { !it.isDeleted }
 
         for (note in unsyncedNotes) {
             try {
                 if (note.remoteId.isNullOrEmpty()) {
                     // Criar nova nota no servidor
-                    val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "")
+                    val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId)
                     val response = api.insertNote(request)
 
                     if (response.isSuccessful) {
@@ -150,11 +161,11 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         }
 
         // 2. Sincronizar notas editadas offline
-        val updatedNotes = noteDao.getUpdatedNotes().filter { !it.remoteId.isNullOrEmpty() && !it.isDeleted }
+        val updatedNotes = noteDao.getUpdatedNotes(userId).filter { !it.remoteId.isNullOrEmpty() && !it.isDeleted }
 
         for (note in updatedNotes) {
             try {
-                val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!)
+                val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId)
                 val response = api.updateNote(note.remoteId!!, request)
 
                 if (response.isSuccessful) {
@@ -172,7 +183,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         }
 
         // 3. Sincronizar notas deletadas offline
-        val deletedNotes = noteDao.getDeletedNotes()
+        val deletedNotes = noteDao.getDeletedNotes(userId)
 
         for (note in deletedNotes) {
             try {

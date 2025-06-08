@@ -7,7 +7,7 @@ import com.clouddy.application.core.utils.pomodoro.Converters
 import com.clouddy.application.data.network.local.dao.PomodoroDao
 import com.clouddy.application.data.network.local.entity.Pomodoro
 
-@Database(entities = [Pomodoro::class], version = 7, exportSchema = true)
+@Database(entities = [Pomodoro::class], version = 9, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class PomodoroDatabase : RoomDatabase() {
     abstract fun pomodoroDao(): PomodoroDao

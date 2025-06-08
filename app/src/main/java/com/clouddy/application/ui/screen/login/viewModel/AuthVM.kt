@@ -1,5 +1,6 @@
 package com.clouddy.application.ui.screen.login.viewModel
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,6 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthVM @Inject constructor(
     private val authRepository: AuthRepository
+
 ) : ViewModel() {
 
     private val _authState = MutableLiveData<AuthState>()
@@ -36,13 +38,7 @@ class AuthVM @Inject constructor(
         }
     }
 
-    fun register(
-        email: String,
-        password: String,
-        repeatPassword: String,
-        name: String,
-        genero: String
-    ) {
+    fun register(email: String, password: String, repeatPassword: String, name: String, genero: String) {
         val userData = UserData(
             nombreUser = name,
             email = email,
@@ -51,10 +47,11 @@ class AuthVM @Inject constructor(
             genero = genero
         )
 
-        authRepository.registerWithFirebaseAndApi(userData) {
-            _authState.postValue(it)
+        authRepository.registerUser(userData) { state ->
+            _authState.postValue(state)
         }
     }
+
 
     fun signOut() {
         authRepository.signOut {

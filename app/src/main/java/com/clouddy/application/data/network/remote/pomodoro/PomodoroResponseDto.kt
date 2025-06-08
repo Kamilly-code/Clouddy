@@ -8,4 +8,5 @@ data class PomodoroResponseDto(val id: Long,
                                val totalMinutes: Int,
                                val currentState: String,
                                val currentRound: Int,
-                               val lastUpdatedDate: String)
+                               val lastUpdatedDate: String,
+                               val userId: String)

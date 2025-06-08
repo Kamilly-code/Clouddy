@@ -2,6 +2,7 @@ package com.clouddy.application.data.network.local.repository
 
 import android.util.Log
 import androidx.lifecycle.LiveData
+import com.clouddy.application.PreferencesManager
 import com.clouddy.application.data.network.local.dao.TaskDao
 import com.clouddy.application.data.network.local.entity.Task
 import com.clouddy.application.data.network.remote.task.TaskApiService
@@ -9,6 +10,7 @@ import com.clouddy.application.data.network.remote.task.TaskRequestDto
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
@@ -17,11 +19,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @ViewModelScoped
-class TaskRepository @Inject constructor(private val taskDao: TaskDao, private val api: TaskApiService) {
-    val allTasks: Flow<List<Task>> = taskDao.getAllTasks()
+class TaskRepository @Inject constructor(private val taskDao: TaskDao, private val api: TaskApiService,
+                                         private val preferencesManager: PreferencesManager) {
+    fun getAllTasks(): Flow<List<Task>> {
+        val userId = preferencesManager.getUserId() ?: return flowOf(emptyList())
+        return taskDao.getAllTasks(userId)
+    }
 
     suspend fun insert(task: Task) = withContext(Dispatchers.IO) {
-        taskDao.insertNewTask(task)
+        val userId = preferencesManager.getUserId() ?: return@withContext
+        taskDao.insertNewTask(task.copy(userId = userId))
     }
 
     suspend fun update(task: Task) = withContext(Dispatchers.IO) {
@@ -33,6 +40,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
     }
 
     suspend fun insertTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
+        val userId = preferencesManager.getUserId() ?: return@withContext
         val localId = taskDao.insertNewTask(task.copy(isSynced = false))
 
         try {
@@ -44,7 +52,8 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
                     val updated = task.copy(
                         id = localId,
                         remoteId = remote.id.toString(),
-                        isSynced = true
+                        isSynced = true,
+                        userId = userId
                     )
                     taskDao.updateFull(updated)
             } }
@@ -54,6 +63,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
     }
 
     suspend fun updateTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
+        val userId = preferencesManager.getUserId() ?: return@withContext
         if (task.id == null) return@withContext
         try {
             if (!task.remoteId.isNullOrEmpty()) {
@@ -114,7 +124,8 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
 
 
     suspend fun syncTasksWithServer() = withContext(Dispatchers.IO) {
-        val unsyncedTasks = taskDao.getAllUnsyncedTasks().filter {!it.isDeleted }
+        val userId = preferencesManager.getUserId() ?: return@withContext
+        val unsyncedTasks = taskDao.getAllUnsyncedTasks(userId).filter {!it.isDeleted }
         for (task in unsyncedTasks) {
             try {
                 if (task.remoteId.isNullOrEmpty()) {
@@ -139,7 +150,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
             }
         }
 
-        val updatedTasks = taskDao.getAllUpdatedTasks().filter { !it.remoteId.isNullOrEmpty() && !it.isDeleted }
+        val updatedTasks = taskDao.getAllUpdatedTasks(userId).filter { !it.remoteId.isNullOrEmpty() && !it.isDeleted }
         for (task in updatedTasks) {
             try {
                 val request = TaskRequestDto(task.task, task.isCompleted, task.remoteId!!)
@@ -159,7 +170,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
             }
         }
 
-        val deletedTasks = taskDao.getAllDeletedTasks().filter { !it.remoteId.isNullOrEmpty() }
+        val deletedTasks = taskDao.getAllDeletedTasks(userId).filter { !it.remoteId.isNullOrEmpty() }
         for (task in deletedTasks) {
             try {
                 if(!task.remoteId.isNullOrEmpty()) {
@@ -180,5 +191,5 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
 
     }
 
-    fun getTasksByDate(date: String): Flow<List<Task>> = taskDao.getTasksByDate(date)
+    fun getTasksByDate(date: String): Flow<List<Task>> = taskDao.getTasksByDate(date, preferencesManager.getUserId() ?: "")
 }

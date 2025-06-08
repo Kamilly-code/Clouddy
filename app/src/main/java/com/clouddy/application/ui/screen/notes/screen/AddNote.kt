@@ -83,7 +83,8 @@ fun AddNote(
                                     remoteId = noteToEdit?.remoteId ?: "",
                                     title = title,
                                     note = content,
-                                    date = currentDate
+                                    date = currentDate,
+                                    userId = ""
                                 )
 
                                 if (noteToEdit != null) {

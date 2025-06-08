@@ -19,7 +19,7 @@ fun Note.toNoteItem(): NoteItem {
     )
 }
 
-fun NoteItem.toNote(): Note {
+fun NoteItem.toNote(userId: String): Note {
     return Note(
         id = this.id,
         title = this.title,
@@ -29,13 +29,15 @@ fun NoteItem.toNote(): Note {
         isSynced = false,
         isDeleted = false,
         isUpdated = false,
+        userId = userId
     )
 }
 
-fun NoteItem.toNoteRequestDto(): NoteRequestDto {
+fun NoteItem.toNoteRequestDto(userId: String): NoteRequestDto {
     return NoteRequestDto(
         title = this.title,
         note = this.note,
-        remoteId = this.id?.toString() ?: ""
+        remoteId = this.remoteId ?: "",
+        userId = userId
     )
 }

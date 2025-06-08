@@ -23,24 +23,26 @@ interface NoteDao {
     suspend fun updateNote(note: Note)
 
 
-    @Query("SELECT * FROM notes_table WHERE isDeleted = 0")
-    fun getAllNotes(): Flow<List<Note>>
+    @Query("SELECT * FROM notes_table WHERE isDeleted = 0 AND userId = :userId")
+    fun getAllNotes(userId: String): Flow<List<Note>>
 
-    @Query("SELECT * FROM notes_table WHERE remoteId = :remoteId LIMIT 1")
-    suspend fun getNoteById(remoteId: String): Note?
+    @Query("SELECT * FROM notes_table WHERE remoteId = :remoteId AND userId = :userId LIMIT 1")
+    suspend fun getNoteById(remoteId: String, userId: String): Note?
 
-    @Query("SELECT * FROM notes_table WHERE isSynced = 0 AND isDeleted = 0")
-    suspend fun getUnsyncedNotes(): List<Note>
+    @Query("SELECT * FROM notes_table WHERE isSynced = 0 AND isDeleted = 0 AND userId = :userId")
+    suspend fun getUnsyncedNotes(userId: String): List<Note>
 
 
-    @Query("SELECT * FROM notes_table WHERE isDeleted = 1")
-    suspend fun getDeletedNotes(): List<Note>
+    @Query("SELECT * FROM notes_table WHERE isDeleted = 1 AND userId = :userId")
+    suspend fun getDeletedNotes(userId: String): List<Note>
 
-    @Query("SELECT * FROM notes_table WHERE isUpdated = 1 ")
-    suspend fun getUpdatedNotes(): List<Note>
+    @Query("SELECT * FROM notes_table WHERE isUpdated = 1 AND userId = :userId")
+    suspend fun getUpdatedNotes(userId: String): List<Note>
 
-    @Query("SELECT * FROM notes_table WHERE date = :date")
-    fun getNotesByDate(date: String): Flow<List<Note>>
+    @Query("SELECT * FROM notes_table WHERE date = :date AND userId = :userId")
+    fun getNotesByDate(date: String, userId: String): Flow<List<Note>>
 
+    @Query("DELETE FROM notes_table WHERE id = :id AND userId = :userId")
+    suspend fun deleteById(id: Long, userId: String)
 
 }

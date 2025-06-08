@@ -171,7 +171,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                         Checkbox(
                                             checked = task.isCompleted,
                                             onCheckedChange = {
-                                                viewModel.storeTaskCompletation(task.toTask())
+                                                viewModel.storeTaskCompletation(task.toTask(userId = ""))
                                             }
                                         )
 
@@ -186,7 +186,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                             )
                                         )
 
-                                        IconButton(onClick = {viewModel.removeTask(task.toTask(), context)}) {
+                                        IconButton(onClick = {viewModel.removeTask(task.toTask(userId = ""), context)}) {
                                             Icon(
                                                 Icons.Default.Delete,
                                                 contentDescription = "Eliminar tareas"
@@ -231,7 +231,8 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                                 isCompleted = false,
                                                 isSynced = false,
                                                 isDeleted = false,
-                                                isUpdated = false
+                                                isUpdated = false,
+                                                userId = ""
                                             )
                                             viewModel.addTask(task)
                                             newTaskText = ""

@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.clouddy.application.PreferencesManager
 import com.clouddy.application.core.utils.NetworkUtils
 import com.clouddy.application.data.network.local.entity.Task
 import com.clouddy.application.data.network.local.mapper.toTaskItem
@@ -29,8 +30,9 @@ import kotlin.text.format
 import kotlin.text.insert
 
 @HiltViewModel
-class TaskViewModel @Inject constructor(private val repository : TaskRepository) : ViewModel(){
-    val tasks: StateFlow<List<TaskItem>> = repository.allTasks
+class TaskViewModel @Inject constructor(private val repository : TaskRepository,
+                                        private val preferencesManager: PreferencesManager) : ViewModel(){
+    val tasks: StateFlow<List<TaskItem>> = repository.getAllTasks()
         .map { list -> list.map { it.toTaskItem() } }
         .stateIn(
             scope = viewModelScope,
@@ -66,11 +68,17 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository)
 
 
     fun addTask(task: Task) = viewModelScope.launch {
+        val userId = preferencesManager.getUserId() ?: return@launch
         val formattedDate = formatDate(LocalDate.now())
-        val taskWithDate = task.copy(remoteId = null, isSynced = false,date = formattedDate)
-        val newId = repository.insertTaskRemoteAndLocal(taskWithDate)
-        Log.d("INSERT", "Nova tarefa adicionada com ID: $newId")
+        val taskWithDate = task.copy(
+            remoteId = null,
+            isSynced = false,
+            date = formattedDate,
+            userId = userId
+        )
+        repository.insertTaskRemoteAndLocal(taskWithDate)
     }
+
 
     fun insertOrUpdatedTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {

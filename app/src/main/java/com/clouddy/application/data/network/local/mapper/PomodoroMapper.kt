@@ -16,6 +16,7 @@ object PomodoroMapper {
             currentState = pomodoro.currentState.name,
             currentRound = pomodoro.currentRound,
             lastUpdatedDate = pomodoro.lastUpdatedDate.toString(),
+            userId = pomodoro.userId
         )
     }
 
@@ -29,6 +30,7 @@ object PomodoroMapper {
             totalMinutes = dto.totalMinutes,
             currentState = PomodoroState.valueOf(dto.currentState),
             currentRound = dto.currentRound,
-            lastUpdatedDate = dto.lastUpdatedDate
+            lastUpdatedDate = dto.lastUpdatedDate,
+            userId = dto.userId
         )
     }}

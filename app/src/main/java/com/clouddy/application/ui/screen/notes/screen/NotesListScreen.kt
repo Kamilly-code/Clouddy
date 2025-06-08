@@ -151,7 +151,7 @@ fun NotesListScreen(
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             items(filteredNotes, key = {it.id ?: filteredNotes.indexOf(it) }) { noteItem ->
-                                NoteItemView(noteItem, onClick = { onNoteClicked(noteItem.toNote()) })
+                                NoteItemView(noteItem, onClick = { onNoteClicked(noteItem.toNote(userId = "")) })
                             }
 
                         }

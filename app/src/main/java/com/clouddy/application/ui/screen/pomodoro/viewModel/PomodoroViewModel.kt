@@ -1,27 +1,32 @@
 package com.clouddy.application.ui.screen.pomodoro.viewModel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.clouddy.application.PreferencesManager
 import com.clouddy.application.core.utils.pomodoro.PomodoroState
 import com.clouddy.application.data.network.local.entity.Pomodoro
 import com.clouddy.application.data.network.local.repository.PomodoroRepository
+import com.clouddy.application.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 
 @HiltViewModel
 class PomodoroViewModel @Inject constructor(
-    private val repository: PomodoroRepository
+    private val repository: PomodoroRepository,
+    private val preferencesManager: PreferencesManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
 
@@ -45,8 +50,13 @@ class PomodoroViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.initFocusTimeIfNeedes()
-            repository.getPomodoroSettings().collect { settings ->
+            val userId = getUserId() ?: run {
+                Log.e("PomodoroVM", "Não foi possível obter userId")
+                return@launch
+            }
+            repository.initFocusTimeIfNeedes(userId)
+
+            repository.getPomodoroSettings(userId).collect { settings ->
                 settings?.let {
                     _pomodoroSettings.value = it
                     _currentRound.value = it.currentRound
@@ -57,6 +67,21 @@ class PomodoroViewModel @Inject constructor(
         }
     }
 
+    fun getUserId(): String? {
+        val userId = preferencesManager.getUserId()
+        if (userId.isNullOrEmpty()) {
+            Log.e("PomodoroVM", "UserID is null or empty")
+            // Tente recuperar o usuário atual do AuthRepository
+            val firebaseUser = authRepository.getCurrentUser()
+            firebaseUser?.uid?.let { uid ->
+                preferencesManager.saveUserId(uid)
+                return uid
+            }
+            return null
+        }
+        return userId
+    }
+
     fun savePomodoroSettingsAndWait(
         focusTime: Int,
         shortBreakTime: Int,
@@ -65,8 +90,11 @@ class PomodoroViewModel @Inject constructor(
         onComplete: () -> Unit
     ) {
         viewModelScope.launch {
-            repository.deleteAll()
-            val current = repository.getPomodoroSettings().firstOrNull()
+            val userId = preferencesManager.getUserId() ?:run {
+                Log.e("PomodoroVM", "UserID is null")
+                return@launch
+            }
+          // val current = repository.getPomodoroSettings(userId).firstOrNull()
 
             val updatedPomodoro = Pomodoro(
                 id = 1,
@@ -74,25 +102,26 @@ class PomodoroViewModel @Inject constructor(
                 shortBreakTime = shortBreakTime,
                 longBreakTime = longBreakTime,
                 rounds = rounds,
-                totalMinutes = current?.totalMinutes ?: 0,
-                currentState = current?.currentState ?: PomodoroState.IDLE,
-                currentRound = 0
+                totalMinutes =  0,
+                currentState = PomodoroState.IDLE,
+                currentRound = 0,
+                userId = userId
             )
 
             repository.insertPomodoro(updatedPomodoro)
+            repository.getPomodoroSettings(userId).first { it != null }
 
             _pomodoroSettings.value = updatedPomodoro
             _currentRound.value = 0
             _isCycleFinished.value = false
-
 
             Log.d("PomodoroViewModel", "Saved Pomodoro settings: $updatedPomodoro")
 
             withContext(Dispatchers.Main) {
                 onComplete()
             }
-        }
     }
+}
 
     fun onPomodoroCompleted(isBreak: Boolean) {
             viewModelScope.launch {
@@ -111,7 +140,7 @@ class PomodoroViewModel @Inject constructor(
                     // Não incrementa o round aqui - só depois do break
                     val isLastRound = (settings.currentRound + 1 >= settings.rounds)
                     val nextState = if (isLastRound) PomodoroState.LONG_BREAK else PomodoroState.SHORT_BREAK
-                    updateCurrentState(nextState)
+                    updateCurrentState(nextState, settings.userId)
                     _isInBreak.value = true
                 } else {
                     // Terminou o break - incrementa o round
@@ -149,23 +178,36 @@ class PomodoroViewModel @Inject constructor(
     fun onPlayPressed() {
         viewModelScope.launch {
             val settings = _pomodoroSettings.value ?: return@launch
+            val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
 
-            // Se for reinício, reseta para round 0
+            // Se for reinício após ciclo completo
             if (_isCycleFinished.value) {
                 val updated = settings.copy(
                     currentRound = 0,
-                    currentState = PomodoroState.FOCUS
+                    currentState = PomodoroState.FOCUS,
+                    lastUpdatedDate = today
                 )
                 repository.updatePomodoro(updated)
                 _pomodoroSettings.value = updated
                 _currentRound.value = 0
+                _currentState.value = PomodoroState.FOCUS
                 _isCycleFinished.value = false
+                _shouldStopTimer.value = false
+            }
+            // Se for início normal (não é reinício)
+            else if (_currentState.value == PomodoroState.IDLE) {
+                val updated = settings.copy(
+                    currentState = PomodoroState.FOCUS,
+                    lastUpdatedDate = today
+                )
+                repository.updatePomodoro(updated)
+                _pomodoroSettings.value = updated
+                _currentState.value = PomodoroState.FOCUS
             }
 
-            Log.d("PomodoroViewModel", "Iniciando round ${_currentRound.value + 1}")
+            Log.d("PomodoroViewModel", "Iniciando round ${_currentRound.value + 1} no estado ${_currentState.value}")
         }
     }
-
 
     fun resetRounds() {
         _currentRound.value = 0
@@ -177,11 +219,11 @@ class PomodoroViewModel @Inject constructor(
         _isCycleFinished.value = false
     }
 
-    fun updateCurrentState(newState: PomodoroState) {
+    fun updateCurrentState(newState: PomodoroState, userId : String) {
         _currentState.value = newState
 
         viewModelScope.launch {
-            val current = repository.getPomodoroSettings().firstOrNull()
+            val current = repository.getPomodoroSettings(userId).firstOrNull()
             if (current != null) {
                 val updated = current.copy(currentState = newState)
                 repository.updatePomodoro(updated)
@@ -190,16 +232,17 @@ class PomodoroViewModel @Inject constructor(
         }
     }
 
-    fun resetPomodoroSettings() {
+    fun resetPomodoroSettings(userId : String) {
         viewModelScope.launch {
-            repository.deleteAll()
+            repository.deleteAll(userId)
             _pomodoroSettings.value = Pomodoro(
                 focusTime = 25,
                 shortBreakTime = 5,
                 longBreakTime = 15,
                 rounds = 4,
                 currentState = PomodoroState.IDLE,
-                currentRound = 0
+                currentRound = 0,
+                userId = userId
             )
             resetRounds()
         }

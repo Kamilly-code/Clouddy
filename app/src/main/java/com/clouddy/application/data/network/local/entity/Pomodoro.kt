@@ -7,9 +7,10 @@ import com.clouddy.application.core.utils.pomodoro.PomodoroState
 import java.time.LocalDate
 
 
-@Entity(tableName = "pomodoro_table")
+@Entity(tableName = "pomodoro_table",
+    primaryKeys = ["id", "userId"])
 data class Pomodoro(
-    @PrimaryKey val id: Long = 1,
+    val id: Long = 1,
     @ColumnInfo(name = "focusTime") val focusTime: Int,
     @ColumnInfo(name = "shortBreakTime") val shortBreakTime: Int,
     @ColumnInfo(name = "longBreakTime") val longBreakTime: Int,
@@ -17,5 +18,6 @@ data class Pomodoro(
     @ColumnInfo(name = "totalMinutes") val totalMinutes: Int = 0,
     @ColumnInfo(name = "currentState") val currentState: PomodoroState = PomodoroState.IDLE,
     @ColumnInfo(name = "currentRound") val currentRound: Int = 0,
-    val lastUpdatedDate: String? = LocalDate.now().toString()
+    val lastUpdatedDate: String? = LocalDate.now().toString(),
+    @ColumnInfo(name = "userId") val userId: String
 )

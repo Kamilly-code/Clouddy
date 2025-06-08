@@ -8,5 +8,6 @@ data class PomodoroRequestDto(
     val totalMinutes: Int,
     val currentState: String,
     val currentRound: Int,
-    val lastUpdatedDate: String
+    val lastUpdatedDate: String,
+    val userId: String
 )

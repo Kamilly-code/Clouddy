@@ -16,19 +16,19 @@ interface PomodoroDao {
     @Update
     suspend fun updatePomodoro(pomodoro: Pomodoro)
 
-    @Query("SELECT * FROM pomodoro_table WHERE id = 1 LIMIT 1")
-     fun getPomodoroSettings(): Flow<Pomodoro?>
+    @Query("SELECT * FROM pomodoro_table WHERE userId = :userId AND id = 1 LIMIT 1")
+     fun getPomodoroSettings(userId: String): Flow<Pomodoro?>
 
-    @Query("DELETE FROM pomodoro_table")
-    suspend fun deleteAll()
+    @Query("DELETE FROM pomodoro_table WHERE userId = :userId")
+    suspend fun deleteAll(userId: String)
 
-    @Query("SELECT * FROM pomodoro_table WHERE id = 1")
-    fun getTotalFocusTime(): Flow<Pomodoro?>
+    @Query("SELECT * FROM pomodoro_table WHERE userId = :userId AND id = 1")
+    fun getTotalFocusTime(userId: String): Flow<Pomodoro?>
 
-    @Query("UPDATE pomodoro_table SET totalMinutes = totalMinutes + :minutes WHERE id = 1")
-    suspend fun addFocusMinutes(minutes: Int)
+    @Query("UPDATE pomodoro_table SET totalMinutes = totalMinutes + :minutes WHERE userId = :userId AND id = 1")
+    suspend fun addFocusMinutes(minutes: Int, userId: String)
 
-    @Query("SELECT * FROM pomodoro_table")
-    fun getAllPomodoro(): Flow<List<Pomodoro>>
+    @Query("SELECT * FROM pomodoro_table WHERE userId = :userId")
+    fun getAllPomodoro(userId: String): Flow<List<Pomodoro>>
 
 }

@@ -13,5 +13,6 @@ data class Task(
     @ColumnInfo(name = "date") val date: String,
     val isSynced: Boolean = false,
     val isUpdated: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    @ColumnInfo(name = "userId") val userId: String
 )

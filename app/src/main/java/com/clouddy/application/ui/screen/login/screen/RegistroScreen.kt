@@ -99,10 +99,16 @@ fun RegistroScreen( navigateHome: () -> Unit, navigateToLogin: () -> Unit) {
         val context = LocalContext.current
 
         LaunchedEffect(authState.value) {
+            println("AuthState changed: ${authState.value}") // Log para depuração
             when (authState.value) {
-                is AuthState.Authenticated -> navigateHome()
+                is AuthState.Authenticated -> {
+                    println("Navigating to home...") // Log para depuração
+                    navigateHome()
+                }
                 is AuthState.Error -> {
-                    Toast.makeText(context, (authState.value as AuthState.Error).message, Toast.LENGTH_SHORT).show()
+                    val error = (authState.value as AuthState.Error).message
+                    println("Error: $error") // Log para depuração
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
                 else -> Unit
             }

@@ -29,12 +29,12 @@ class CalendarViewModel @Inject constructor(
     fun getNotesForDate(date: LocalDate):Flow<List<Note>> {
         val formattedDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
         Log.d("CalendarViewModel", "Buscando notas para data: $formattedDate")
-        return noteDao.getNotesByDate(formattedDate)
+        return noteDao.getNotesByDate(formattedDate, userId = "")
     }
 
     fun getTasksForDate(date: LocalDate): Flow<List<Task>> {
         val formattedDate = formatDate(date)
-        return taskDao.getTasksByDate(formattedDate)
+        return taskDao.getTasksByDate(formattedDate, userId = "")
     }
 
     fun updateTaskCompletion(task: Task) {
