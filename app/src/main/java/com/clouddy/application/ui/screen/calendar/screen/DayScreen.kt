@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -47,7 +49,9 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.time.DayOfWeek
 
 @Composable
-fun DayScreen(initialDate: LocalDate? = null) {
+fun DayScreen(initialDate: LocalDate? = null,
+              navigateToNote: () -> Unit,
+              navigateToTaskScreen: () -> Unit ) {
 
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val selectedDate by calendarViewModel.selectedDate.collectAsState()
@@ -72,8 +76,8 @@ fun DayScreen(initialDate: LocalDate? = null) {
     val tasks by calendarViewModel.getTasksForDate(selectedDate).collectAsState(emptyList())
 
     LaunchedEffect(selectedDate) {
-        notesLoading.value = true
-        tasksLoading.value = true
+        notesLoading.value = false
+        tasksLoading.value = false
     }
 
     // Efeito para atualizar os estados de carregamento
@@ -103,12 +107,11 @@ fun DayScreen(initialDate: LocalDate? = null) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(brush = gradientBrush)
-        )
-        Scaffold(
-            containerColor = Color.Transparent,
-            modifier = Modifier.fillMaxSize(),
-            content = { paddingValues ->
-                    // Conteúdo principal
+        ) {
+            Scaffold(
+                containerColor = Color.Transparent,
+                modifier = Modifier.fillMaxSize(),
+                content = { paddingValues ->
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -187,17 +190,38 @@ fun DayScreen(initialDate: LocalDate? = null) {
                                 .background(Color.White, shape = RoundedCornerShape(16.dp))
                                 .padding(8.dp)
                         ) {
-
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(8.dp)
                             ) {
-                                if (notesLoading.value) {
+                                Text(text = "📝 Notas", style = MaterialTheme.typography.titleSmall)
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (notesLoading.value && notes.isEmpty()) {
                                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                                } else if (notes.isNotEmpty()) {
-                                    Text(text = "📝 Notas", style = MaterialTheme.typography.titleSmall)
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                } else if (notes.isEmpty()) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "Nenhuma nota encontrada para este dia",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.Gray
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Button(
+                                            onClick = { navigateToNote() },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF2677B0),
+                                                contentColor = Color.White
+                                            )
+                                        ) {
+                                            Text("Criar Nova Nota")
+                                        }
+                                    }
+                                } else {
                                     notes.forEach { note ->
                                         Card(
                                             modifier = Modifier
@@ -217,22 +241,37 @@ fun DayScreen(initialDate: LocalDate? = null) {
                                             }
                                         }
                                     }
-                                } else {
-                                    Text(
-                                        text = "Nenhuma nota para este dia.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.Gray
-                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(24.dp))
 
-                                // Seção de tarefas
-                                if (tasksLoading.value) {
+                                Text(text = "✅ Tarefas", style = MaterialTheme.typography.titleSmall)
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (tasksLoading.value && tasks.isEmpty()) {
                                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                                } else if (tasks.isNotEmpty()) {
-                                    Text(text = "✅ Tarefas", style = MaterialTheme.typography.titleSmall)
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                } else if (tasks.isEmpty()) {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "Nenhuma tarefa encontrada para este dia",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.Gray
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Button(
+                                            onClick = { navigateToTaskScreen() },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF2677B0),
+                                                contentColor = Color.White
+                                            )
+                                        ) {
+                                            Text("Criar Nova Tarefa")
+                                        }
+                                    }
+                                } else {
                                     tasks.forEach { task ->
                                         Row(
                                             modifier = Modifier
@@ -242,24 +281,19 @@ fun DayScreen(initialDate: LocalDate? = null) {
                                         ) {
                                             Checkbox(
                                                 checked = task.isCompleted,
-                                                onCheckedChange = {
-                                                    calendarViewModel.updateTaskCompletion(task)
+                                                onCheckedChange = {isChecked ->
+                                                    calendarViewModel.updateTaskCompletion(task.copy(isCompleted = isChecked))
                                                 }
                                             )
                                             Text(text = task.task)
                                         }
                                     }
-                                } else {
-                                    Text(
-                                        text = "Nenhuma tarefa para este dia.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.Gray
-                                    )
                                 }
                             }
                         }
                     }
-            }
-        )
+                }
+            )
+        }
     }
 }

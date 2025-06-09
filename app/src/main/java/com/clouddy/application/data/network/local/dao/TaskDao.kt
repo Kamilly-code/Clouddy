@@ -45,6 +45,4 @@ interface TaskDao {
 
     @Query("SELECT * FROM task_table WHERE date = :selectedDate AND userId = :userId")
     fun getTasksByDate(selectedDate: String, userId: String): Flow<List<Task>>
-
-
 }

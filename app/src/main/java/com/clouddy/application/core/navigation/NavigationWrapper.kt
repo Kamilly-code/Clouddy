@@ -74,8 +74,10 @@ fun NavigationWrapper() {
 
         composable<DayScreenArgs> { backStackEntry ->
             val args = backStackEntry.toRoute<DayScreenArgs>()
-            val selectedDate = LocalDate.parse(args.selectedDate) // Converter de string para LocalDate
-            DayScreen(initialDate = selectedDate)
+            val selectedDate = LocalDate.parse(args.selectedDate)
+            DayScreen(initialDate = selectedDate,
+                navigateToNote = { navController.navigate(Notes) },
+                navigateToTaskScreen = { navController.navigate(Task) })
         }
 
     }

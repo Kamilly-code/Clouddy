@@ -15,12 +15,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -90,11 +88,9 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
 
     fun addTask(task: Task) = viewModelScope.launch {
         currentUserId.value?.let { userId ->
-            val formattedDate = formatDate(LocalDate.now())
             val taskWithUser = task.copy(
                 remoteId = null,
                 isSynced = false,
-                date = formattedDate,
                 userId = userId
             )
             repository.insertTaskRemoteAndLocal(taskWithUser)
@@ -127,14 +123,13 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
 
 
 
-
-
     fun removeTask(task: Task, context: Context) {
         currentUserId.value?.let { userId ->
             viewModelScope.launch(Dispatchers.IO) {
+                val taskWithUser = task.copy(userId = userId)
                 val networkUtils = NetworkUtils()
                 if (networkUtils.isConnected(context)) {
-                    repository.deleteTaskRemoteAndLocal(task)
+                    repository.deleteTaskRemoteAndLocal(taskWithUser)
                 } else {
                     val localTask = task.copy(isDeleted = true, isSynced = false, userId = userId)
                     repository.updateTaskRemoteAndLocal(localTask)

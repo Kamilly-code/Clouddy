@@ -25,11 +25,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,7 +41,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,13 +70,18 @@ import com.clouddy.application.data.network.local.mapper.toTask
 import com.clouddy.application.ui.screen.notes.components.CloudFABImage
 import com.clouddy.application.ui.screen.toDo.viewModel.TaskViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
+import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.util.Date
+import java.util.Locale
+import kotlin.text.format
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
     val viewModel: TaskViewModel = hiltViewModel()
     val tasks by viewModel.tasks.collectAsState(initial = emptyList())
+
 
     val currentUserId by viewModel.currentUserId.collectAsState()
 
@@ -85,6 +96,11 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
 
     var showAddTaskSheet by remember { mutableStateOf(false) }
     var newTaskText by remember { mutableStateOf("") }
+
+    var selectedDate by remember {
+        mutableStateOf(viewModel.formatDate(LocalDate.now()))
+    }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
@@ -129,7 +145,8 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                 )
             },
             content = { paddingValues ->
-                Box(modifier = Modifier
+                Box(
+                    modifier = Modifier
                     .fillMaxSize()
                     .draggable(
                         state = dragState,
@@ -160,7 +177,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                 .align(Alignment.CenterHorizontally)
                         )
 
-                        LazyColumn (verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(tasks, key = { it.id ?: 0L }) { task ->
                                 Card(
                                     modifier = Modifier
@@ -183,7 +200,11 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                             checked = task.isCompleted,
                                             onCheckedChange = {
                                                 currentUserId?.let { userId ->
-                                                    viewModel.storeTaskCompletation(task.toTask(userId = userId))
+                                                    viewModel.storeTaskCompletation(
+                                                        task.toTask(
+                                                            userId = userId
+                                                        )
+                                                    )
                                                 }
                                             }
                                         )
@@ -199,7 +220,14 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                             )
                                         )
 
-                                        IconButton(onClick = {viewModel.removeTask(task.toTask(userId = ""), context)}) {
+                                        IconButton(onClick = {
+                                            currentUserId?.let { userId ->
+                                                viewModel.removeTask(
+                                                    task.toTask(userId = userId),
+                                                    context
+                                                )
+                                            }
+                                        }) {
                                             Icon(
                                                 Icons.Default.Delete,
                                                 contentDescription = "Eliminar tareas"
@@ -232,15 +260,31 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
+
+                                Button(
+                                    onClick = { showDatePicker = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                ) {
+                                    Text("Data: $selectedDate")
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(Icons.Default.Edit, contentDescription = "Selecionar data")
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
                                 Button(
                                     onClick = {
                                         if (newTaskText.isNotBlank()) {
-                                            val formattedDate = viewModel.formatDate(LocalDate.now())
                                             val task = Task(
                                                 id = null,
                                                 remoteId = null,
                                                 task = newTaskText,
-                                                date = formattedDate,
+                                                date = selectedDate, // Usando a data selecionada
                                                 isCompleted = false,
                                                 isSynced = false,
                                                 isDeleted = false,
@@ -260,10 +304,36 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                         }
                     }
 
+                    if (showDatePicker) {
+                        val datePickerState = rememberDatePickerState(
+                            initialSelectedDateMillis = SimpleDateFormat(
+                                "yyyy-MM-dd",
+                                Locale.getDefault()
+                            )
+                                .parse(selectedDate)?.time ?: System.currentTimeMillis()
+                        )
+
+                        DatePickerDialog(
+                            onDismissRequest = { showDatePicker = false },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        datePickerState.selectedDateMillis?.let { millis ->
+                                            selectedDate =
+                                                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                                    .format(Date(millis))
+                                        }
+                                        showDatePicker = false
+                                    }
+                                ) {
+                                    Text("OK")
+                                }
+                            }
+                        ) {
+                            DatePicker(state = datePickerState)
+                        }
+                    }
                 }
-
-
-            }
-        )
+            })
     }
 }

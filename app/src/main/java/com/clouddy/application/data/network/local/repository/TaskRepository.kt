@@ -84,26 +84,28 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
     }
 
     suspend fun deleteTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
+        val userId = preferencesManager.getUserId() ?: return@withContext
+
         try {
-            if (task.remoteId != null && task.remoteId.isNotEmpty()) {
+            if (!task.remoteId.isNullOrEmpty()) {
                 val response = api.deleteTask(task.remoteId)
                 if (response.isSuccessful) {
                     taskDao.delete(task)
                 } else {
-                    Log.e("API", "Erro ao deletar tarefa remota: ${response.message()}")
-                    val markedTask = task.copy(isDeleted = true, isSynced = false)
-                    taskDao.updateFull(markedTask)
+                    // Marcar como deletado para sincronização posterior
+                    taskDao.updateFull(task.copy(isDeleted = true, isSynced = false, userId = userId))
                 }
             } else {
-                val markedTask = task.copy(isDeleted = true, isSynced = false)
-                taskDao.updateFull(markedTask)
+                // Se não tem remoteId, apenas deletar localmente
+                taskDao.delete(task)
             }
-
-        }catch (e: Exception) {
+        } catch (e: Exception) {
+            // Em caso de erro, marcar como deletado para tentar novamente depois
+            taskDao.updateFull(task.copy(isDeleted = true, isSynced = false, userId = userId))
             Log.e("API", "Erro ao deletar tarefa: ${e.message}")
-
         }
     }
+
 
     suspend fun isBackendAvailable(): Boolean = withContext(Dispatchers.IO) {
         try {
