@@ -24,7 +24,7 @@ object Pomodoro
 object PomodoroScreen
 
 @Serializable
-object DayScreen
+data class DayScreenArgs(val selectedDate: String)
 
 @Serializable
 object Calendar

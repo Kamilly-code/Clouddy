@@ -2,15 +2,14 @@ package com.clouddy.application.ui.screen.toDo.viewModel
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.clouddy.application.PreferencesManager
 import com.clouddy.application.core.utils.NetworkUtils
 import com.clouddy.application.data.network.local.entity.Task
 import com.clouddy.application.data.network.local.mapper.toTaskItem
 import com.clouddy.application.data.network.local.repository.TaskRepository
+import com.clouddy.application.data.repository.AuthRepository
 import com.clouddy.application.domain.model.TaskItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -19,119 +18,148 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import kotlin.text.format
-import kotlin.text.insert
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(private val repository : TaskRepository,
-                                        private val preferencesManager: PreferencesManager) : ViewModel(){
-    val tasks: StateFlow<List<TaskItem>> = repository.getAllTasks()
-        .map { list -> list.map { it.toTaskItem() } }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+                                        private val preferencesManager: PreferencesManager,
+                                        private val authRepository: AuthRepository) : ViewModel(){
+    private val _currentUserId = MutableStateFlow<String?>(null)
+    val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
 
+    private val _tasks = MutableStateFlow<List<TaskItem>>(emptyList())
+    val tasks: StateFlow<List<TaskItem>> = _tasks.asStateFlow()
 
     private val _isBackendOnline = MutableStateFlow(false)
     val isBackendOnline = _isBackendOnline.asStateFlow()
 
     init {
-        checkAndSyncBackend()
+        viewModelScope.launch {
+            val userId = getUserId() ?: run {
+                Log.e("TaskViewModel", "UserId não encontrado")
+                return@launch
+            }
+            _currentUserId.value = userId
+            loadTasks(userId)
+            checkAndSyncBackend(userId)
+        }
     }
 
+    private fun getUserId(): String? {
+        val userId = preferencesManager.getUserId()
+        if (userId.isNullOrEmpty()) {
+            Log.e("TaskViewModel", "UserID vazio. Tentando recuperar do Firebase...")
+            val firebaseUser = authRepository.getCurrentUser()
+            firebaseUser?.uid?.let { uid ->
+                preferencesManager.saveUserId(uid)
+                return uid
+            }
+            return null
+        }
+        return userId
+    }
 
-    fun loadTasks() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val backendOnline = repository.isBackendAvailable()
-            if (backendOnline) {
-                repository.syncTasksWithServer()
-            } else {
-                Log.w("TaskViewModel", "Backend offline — usando somente dados locais")
+    internal fun loadTasks(userId: String) {
+        viewModelScope.launch {
+            try {
+                repository.getAllTasks(userId)
+                    .map { tasks -> tasks.map { it.toTaskItem() } }
+                    .collect { tasksList ->
+                        _tasks.value = tasksList
+                    }
+            } catch (e: Exception) {
+                Log.e("TaskViewModel", "Error loading tasks", e)
             }
         }
     }
+
 
     fun syncAllTasks() {
-        viewModelScope.launch {
-            repository.syncTasksWithServer()
-        }
-    }
-
-
-    fun addTask(task: Task) = viewModelScope.launch {
-        val userId = preferencesManager.getUserId() ?: return@launch
-        val formattedDate = formatDate(LocalDate.now())
-        val taskWithDate = task.copy(
-            remoteId = null,
-            isSynced = false,
-            date = formattedDate,
-            userId = userId
-        )
-        repository.insertTaskRemoteAndLocal(taskWithDate)
-    }
-
-
-    fun insertOrUpdatedTask(task: Task) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val isConnected = repository.isBackendAvailable()
-            if (isConnected) {
-                if (task.remoteId == null) {
-                    repository.insertTaskRemoteAndLocal(task)
-                }else if (task.isUpdated){
-                    repository.updateTaskRemoteAndLocal(task)
-                }else {
-                    Log.d("TaskViewModel", "Tarefa já sincronizada — nenhuma ação necessária.")
-                }
-            } else {
-                val localTask = if (task.remoteId == null) {
-                    task.copy(isSynced = false)
-                } else {
-                    task.copy(isUpdated = true, isSynced = false)
-                }
-                repository.insert(localTask)
-
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch {
+                repository.syncTasksWithServer(userId)
             }
         }
     }
+
+    fun addTask(task: Task) = viewModelScope.launch {
+        currentUserId.value?.let { userId ->
+            val formattedDate = formatDate(LocalDate.now())
+            val taskWithUser = task.copy(
+                remoteId = null,
+                isSynced = false,
+                date = formattedDate,
+                userId = userId
+            )
+            repository.insertTaskRemoteAndLocal(taskWithUser)
+        }
+    }
+
+    fun insertOrUpdatedTask(task: Task) {
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch(Dispatchers.IO) {
+                val isConnected = repository.isBackendAvailable()
+                if (isConnected) {
+                    if (task.remoteId == null) {
+                        repository.insertTaskRemoteAndLocal(task)
+                    } else if (task.isUpdated) {
+                        repository.updateTaskRemoteAndLocal(task)
+                    } else {
+                        Log.d("TaskViewModel", "Tarefa já sincronizada — nenhuma ação necessária.")
+                    }
+                } else {
+                    val localTask = if (task.remoteId == null) {
+                        task.copy(isSynced = false, userId = userId)
+                    } else {
+                        task.copy(isUpdated = true, isSynced = false, userId = userId)
+                    }
+                    repository.insert(localTask, userId)
+                }
+            }
+        }
+    }
+
 
 
 
 
     fun removeTask(task: Task, context: Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val networkUtils = NetworkUtils()
-            if (networkUtils.isConnected(context)) {
-                repository.deleteTaskRemoteAndLocal(task)
-            } else {
-                val localTask = task.copy(isDeleted = true, isSynced = false)
-                repository.updateTaskRemoteAndLocal(localTask)
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch(Dispatchers.IO) {
+                val networkUtils = NetworkUtils()
+                if (networkUtils.isConnected(context)) {
+                    repository.deleteTaskRemoteAndLocal(task)
+                } else {
+                    val localTask = task.copy(isDeleted = true, isSynced = false, userId = userId)
+                    repository.updateTaskRemoteAndLocal(localTask)
+                }
             }
         }
     }
 
 
 
-    fun storeTaskCompletation ( task: Task ) {
-        viewModelScope.launch {
-            val updatedTask = task.copy(
-                isCompleted = !task.isCompleted, // Alterna el estado de completado
-                isUpdated = true, // Marca como actualizada
-                isSynced = false // Marca como no sincronizada
-            )
+    fun storeTaskCompletation (task: Task) {
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch {
+                val updatedTask = task.copy(
+                    isCompleted = !task.isCompleted,
+                    isUpdated = true,
+                    isSynced = false,
+                    userId = userId
+                )
 
-            if (task.remoteId == null) {
-                repository.insert(updatedTask) // Inserta localmente si no tiene remoteId
-            } else {
-                repository.updateTaskRemoteAndLocal(updatedTask) // Actualiza local y remotamente
+                if (task.remoteId == null) {
+                    repository.insert(updatedTask, userId)
+                } else {
+                    repository.updateTaskRemoteAndLocal(updatedTask)
+                }
             }
         }
     }
@@ -139,12 +167,12 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
 
 
 
-    fun checkAndSyncBackend() {
+    fun checkAndSyncBackend(userId: String) {
         viewModelScope.launch {
             val online = repository.isBackendAvailable()
             _isBackendOnline.value = online
             if (online) {
-                repository.syncTasksWithServer()
+                repository.syncTasksWithServer(userId)
             }
         }
     }
@@ -169,22 +197,27 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
                     task.copy(isUpdated = true, isSynced = false)
                 }
 
-                repository.insert(localTask)
+                repository.insert(localTask, task.userId)
             }
         }
     }
 
     fun syncNotesIfNeeded() {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.syncTasksWithServer()
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.syncTasksWithServer(userId)
+            }
         }
     }
 
     fun syncNotesWithServer() {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.syncTasksWithServer()
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.syncTasksWithServer(userId)
+            }
         }
     }
+
 
 
     fun formatDate(date: LocalDate): String {
@@ -194,9 +227,8 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
 
     fun getTasksByDate(date: LocalDate): Flow<List<Task>> {
         val formattedDate = formatDate(date)
-        return repository.getTasksByDate(formattedDate)
+        return currentUserId.value?.let { userId ->
+            repository.getTasksByDate(formattedDate, userId)
+        } ?: flowOf(emptyList())
     }
-
-
-
 }

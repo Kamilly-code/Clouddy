@@ -21,11 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
@@ -39,28 +41,48 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.clouddy.application.R
-import com.clouddy.application.ui.screen.pomodoro.viewModel.PomodoroViewModel
 import com.example.clouddy.ui.theme.ClouddyTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import java.time.format.DateTimeFormatter
-import kotlin.text.toLong
-import kotlin.toString
+import java.time.DayOfWeek
 
 @Composable
-fun DayScreen() {
-    val calendarViewModel: CalendarViewModel = hiltViewModel()
+fun DayScreen(initialDate: LocalDate? = null) {
 
-    var currentWeekStart by remember { mutableStateOf(LocalDate.now().with(java.time.DayOfWeek.MONDAY)) }
-    val selectedDate = remember { mutableStateOf(LocalDate.now()) }
+    val calendarViewModel: CalendarViewModel = hiltViewModel()
+    val selectedDate by calendarViewModel.selectedDate.collectAsState()
+    var currentWeekStart by remember {
+        mutableStateOf((initialDate ?: selectedDate).with(DayOfWeek.MONDAY))
+    }
+
+    val userId by calendarViewModel.currentUserId.collectAsState()
+
+    val notesLoading = remember { mutableStateOf(true) }
+    val tasksLoading = remember { mutableStateOf(true) }
+
+    LaunchedEffect(initialDate) {
+        if (initialDate != null) {
+            calendarViewModel.setSelectedDate(initialDate)
+        }
+    }
+
 
     // Observar as notas e tarefas com base no selectedDate
-    val notes by calendarViewModel.getNotesForDate(selectedDate.value).collectAsState(emptyList())
-    val tasks by calendarViewModel.getTasksForDate(selectedDate.value).collectAsState(emptyList())
+    val notes by calendarViewModel.getNotesForDate(selectedDate).collectAsState(emptyList())
+    val tasks by calendarViewModel.getTasksForDate(selectedDate).collectAsState(emptyList())
+
+    LaunchedEffect(selectedDate) {
+        notesLoading.value = true
+        tasksLoading.value = true
+    }
+
+    // Efeito para atualizar os estados de carregamento
+    LaunchedEffect(notes) {
+        notesLoading.value = false
+    }
+    LaunchedEffect(tasks) {
+        tasksLoading.value = false
+    }
 
     val gradientBrush = Brush.verticalGradient(
         colors = listOf(
@@ -72,16 +94,9 @@ fun DayScreen() {
         )
     )
     val systemUiController = rememberSystemUiController()
+    systemUiController.setStatusBarColor(Color.Transparent, darkIcons = false)
+    systemUiController.setNavigationBarColor(Color.Transparent, darkIcons = false)
 
-    systemUiController.setStatusBarColor(
-        color = Color.Transparent,
-        darkIcons = false // ou true, se quiser ícones escuros
-    )
-
-    systemUiController.setNavigationBarColor(
-        color = Color.Transparent,
-        darkIcons = false
-    )
 
     ClouddyTheme {
         Box(
@@ -107,7 +122,7 @@ fun DayScreen() {
                         ) {
                             items(7) { index ->
                                 val day = currentWeekStart.plusDays(index.toLong())
-                                val isSelected = day == selectedDate.value
+                                val isSelected = day == selectedDate
 
                                 Column(
                                     modifier = Modifier
@@ -117,7 +132,9 @@ fun DayScreen() {
                                             if (isSelected) Color(0xFF002F50) else Color.White,
                                             shape = RoundedCornerShape(8.dp)
                                         )
-                                        .clickable { selectedDate.value = day },
+                                        .clickable {
+                                            calendarViewModel.setSelectedDate(day)
+                                        },
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
@@ -158,7 +175,7 @@ fun DayScreen() {
 
                         // Conteúdo de notas e tarefas
                         Text(
-                            text = "Lembretes de ${selectedDate.value.dayOfMonth}/${selectedDate.value.monthValue}/${selectedDate.value.year}",
+                            text = "Lembretes de ${selectedDate.dayOfMonth}/${selectedDate.monthValue}/${selectedDate.year}",
                             style = MaterialTheme.typography.titleMedium
                         )
 
@@ -176,7 +193,9 @@ fun DayScreen() {
                                     .fillMaxWidth()
                                     .padding(8.dp)
                             ) {
-                                if (notes.isNotEmpty()) {
+                                if (notesLoading.value) {
+                                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                                } else if (notes.isNotEmpty()) {
                                     Text(text = "📝 Notas", style = MaterialTheme.typography.titleSmall)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     notes.forEach { note ->
@@ -208,7 +227,10 @@ fun DayScreen() {
 
                                 Spacer(modifier = Modifier.height(24.dp))
 
-                                if (tasks.isNotEmpty()) {
+                                // Seção de tarefas
+                                if (tasksLoading.value) {
+                                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                                } else if (tasks.isNotEmpty()) {
                                     Text(text = "✅ Tarefas", style = MaterialTheme.typography.titleSmall)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     tasks.forEach { task ->
@@ -220,7 +242,9 @@ fun DayScreen() {
                                         ) {
                                             Checkbox(
                                                 checked = task.isCompleted,
-                                                onCheckedChange = { /* TODO: atualizar no banco */ }
+                                                onCheckedChange = {
+                                                    calendarViewModel.updateTaskCompletion(task)
+                                                }
                                             )
                                             Text(text = task.task)
                                         }

@@ -29,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,6 +72,17 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
     val viewModel: TaskViewModel = hiltViewModel()
     val tasks by viewModel.tasks.collectAsState(initial = emptyList())
 
+    val currentUserId by viewModel.currentUserId.collectAsState()
+
+    // Verificar autenticação
+    if (currentUserId == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+
     var showAddTaskSheet by remember { mutableStateOf(false) }
     var newTaskText by remember { mutableStateOf("") }
 
@@ -91,12 +103,11 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
 
 
     LaunchedEffect(Unit) {
-        viewModel.checkAndSyncBackend()
+        viewModel.checkAndSyncBackend(userId = currentUserId!!)
         viewModel.syncAllTasks()
     }
 
 
-    //Efecto de la navegacion de arrastre/drag para la derecha
     LaunchedEffect(dragOffset.value) {
         if (!hasNavigated.value && dragOffset.value > dragThreshold) {
             hasNavigated.value = true
@@ -171,7 +182,9 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                         Checkbox(
                                             checked = task.isCompleted,
                                             onCheckedChange = {
-                                                viewModel.storeTaskCompletation(task.toTask(userId = ""))
+                                                currentUserId?.let { userId ->
+                                                    viewModel.storeTaskCompletation(task.toTask(userId = userId))
+                                                }
                                             }
                                         )
 
@@ -232,7 +245,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                                 isSynced = false,
                                                 isDeleted = false,
                                                 isUpdated = false,
-                                                userId = ""
+                                                userId = currentUserId ?: return@Button
                                             )
                                             viewModel.addTask(task)
                                             newTaskText = ""

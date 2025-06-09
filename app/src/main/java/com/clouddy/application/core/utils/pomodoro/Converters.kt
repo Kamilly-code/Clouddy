@@ -16,5 +16,4 @@ class Converters {
     @TypeConverter
     fun toLocalDate(dateString: String?): LocalDate? = dateString?.let { LocalDate.parse(it) }
 
-
 }

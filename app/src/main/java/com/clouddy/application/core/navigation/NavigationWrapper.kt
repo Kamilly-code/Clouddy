@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.clouddy.application.ui.screen.calendar.screen.DayScreen
 import com.clouddy.application.ui.screen.calendar.screen.FullScreenCalendar
 import com.clouddy.application.ui.screen.login.screen.LoginScreen
@@ -15,6 +16,7 @@ import com.clouddy.application.ui.screen.notes.NotesApp
 import com.clouddy.application.ui.screen.pomodoro.screen.PomodoroList
 import com.clouddy.application.ui.screen.pomodoro.screen.PomodoroScreen
 import com.clouddy.application.ui.screen.toDo.screen.TaskScreen
+import java.time.LocalDate
 
 @Composable
 fun NavigationWrapper() {
@@ -63,12 +65,17 @@ fun NavigationWrapper() {
         }
 
         composable<Calendar> {
-            FullScreenCalendar( navigateToDayScreen = { navController.navigate(DayScreen) })
+            FullScreenCalendar(
+                navigateToDayScreen = { date ->
+                    navController.navigate(DayScreenArgs(date.toString()))
+                }
+            )
         }
 
-        composable<DayScreen> { backStackEntry ->
-            DayScreen(  )
-
+        composable<DayScreenArgs> { backStackEntry ->
+            val args = backStackEntry.toRoute<DayScreenArgs>()
+            val selectedDate = LocalDate.parse(args.selectedDate) // Converter de string para LocalDate
+            DayScreen(initialDate = selectedDate)
         }
 
     }

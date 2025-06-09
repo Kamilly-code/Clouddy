@@ -8,7 +8,10 @@ fun Task.toTaskItem(): TaskItem = TaskItem(
     remoteId = this.remoteId,
     task = this.task,
     date = this.date,
-    isCompleted = this.isCompleted
+    isCompleted = this.isCompleted,
+    isSynced = this.isSynced,
+    isUpdated = this.isUpdated,
+    isDeleted = this.isDeleted
 )
 
 fun TaskItem.toTask(userId: String): Task = Task(
@@ -17,9 +20,9 @@ fun TaskItem.toTask(userId: String): Task = Task(
     task = this.task,
     date = this.date,
     isCompleted = this.isCompleted,
-    isSynced = false,
-    isDeleted = false,
-    isUpdated = false ,
+    isSynced = this.isSynced,
+    isDeleted = this.isDeleted,
+    isUpdated = this.isUpdated,
     userId = userId
 
 )

@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.DrawerDefaults.backgroundColor
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -27,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,18 +35,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.clouddy.application.ui.screen.calendar.viewModel.CalendarViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import androidx.compose.runtime.getValue
+import kotlin.toString
 
 @Composable
 fun FullScreenCalendar(
-    navigateToDayScreen: () -> Unit
+    navigateToDayScreen: (LocalDate) -> Unit
 ) {
-    val selectedDate = remember { mutableStateOf<LocalDate?>(null) }
+    val calendarViewModel: CalendarViewModel = hiltViewModel()
+
+    val selectedDate by calendarViewModel.selectedDate.collectAsState()
     val currentMonth = remember { mutableStateOf(YearMonth.now()) }
 
     val firstDayOfMonth = currentMonth.value.atDay(1)
@@ -141,28 +147,41 @@ fun FullScreenCalendar(
             items(previousMonthDays.size) { index ->
                 val day = previousMonthDays[index]
                 val date = previousMonth.atDay(day)
-                CalendarDayCell(date, isCurrentMonth = false, selectedDate.value == date) {
-                    selectedDate.value = date
-                    navigateToDayScreen()
-                }
+                CalendarDayCell(
+                    date = date,
+                    isCurrentMonth = true,
+                    isSelected = selectedDate == date,
+                    onClick = {
+                        calendarViewModel.setSelectedDate(date)
+                        navigateToDayScreen(date)
+                    })
             }
 
             items(currentMonthDays.size) { index ->
                 val day = currentMonthDays[index]
                 val date = currentMonth.value.atDay(day)
-                CalendarDayCell(date, isCurrentMonth = true, selectedDate.value == date) {
-                    selectedDate.value = date
-                    navigateToDayScreen()
-                }
+                CalendarDayCell(
+                    date = date,
+                    isCurrentMonth = true,
+                    isSelected = selectedDate == date,
+                    onClick = {
+                        calendarViewModel.setSelectedDate(date)
+                        navigateToDayScreen(date)
+                    }
+                )
             }
 
             items(nextMonthDays.size) { index ->
                 val day = nextMonthDays[index]
                 val date = currentMonth.value.plusMonths(1).atDay(day)
-                CalendarDayCell(date, isCurrentMonth = false, selectedDate.value == date) {
-                    selectedDate.value = date
-                    navigateToDayScreen()
-                }
+                CalendarDayCell(
+                    date = date,
+                    isCurrentMonth = true,
+                    isSelected = selectedDate == date,
+                    onClick = {
+                        calendarViewModel.setSelectedDate(date)
+                        navigateToDayScreen(date)
+                    })
             }
         }
     }
@@ -187,7 +206,6 @@ fun CalendarDayCell(
         shape = RoundedCornerShape(8.dp),
         elevation = 4.dp,
         backgroundColor = when {
-            isSelected -> Color(0xFF48A9F3)
             isToday -> Color(0xFF2677B0)
             else -> Color.White
         }
@@ -204,7 +222,6 @@ fun CalendarDayCell(
                     text = date.dayOfMonth.toString(),
                     color = when {
                         isToday -> Color.White
-                        isSelected -> Color.White
                         !isCurrentMonth -> Color.Gray
                         else -> Color.Black
                     }

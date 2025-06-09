@@ -21,13 +21,11 @@ import javax.inject.Singleton
 @ViewModelScoped
 class TaskRepository @Inject constructor(private val taskDao: TaskDao, private val api: TaskApiService,
                                          private val preferencesManager: PreferencesManager) {
-    fun getAllTasks(): Flow<List<Task>> {
-        val userId = preferencesManager.getUserId() ?: return flowOf(emptyList())
+    fun getAllTasks(userId: String): Flow<List<Task>> {
         return taskDao.getAllTasks(userId)
     }
 
-    suspend fun insert(task: Task) = withContext(Dispatchers.IO) {
-        val userId = preferencesManager.getUserId() ?: return@withContext
+    suspend fun insert(task: Task, userId: String) = withContext(Dispatchers.IO) {
         taskDao.insertNewTask(task.copy(userId = userId))
     }
 
@@ -123,7 +121,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
 
 
 
-    suspend fun syncTasksWithServer() = withContext(Dispatchers.IO) {
+    suspend fun syncTasksWithServer(userId: String) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
         val unsyncedTasks = taskDao.getAllUnsyncedTasks(userId).filter {!it.isDeleted }
         for (task in unsyncedTasks) {
@@ -191,5 +189,8 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
 
     }
 
-    fun getTasksByDate(date: String): Flow<List<Task>> = taskDao.getTasksByDate(date, preferencesManager.getUserId() ?: "")
+    fun getTasksByDate(date: String, userId: String): Flow<List<Task>> {
+        return taskDao.getTasksByDate(date, userId)
+    }
+
 }
