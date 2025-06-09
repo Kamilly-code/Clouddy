@@ -8,6 +8,7 @@ import com.clouddy.application.data.network.local.dao.NoteDao
 import com.clouddy.application.data.network.local.entity.Note
 import com.clouddy.application.data.network.remote.note.NoteRequestDto
 import com.clouddy.application.data.network.remote.note.NotesApiService
+import com.clouddy.application.data.repository.AuthRepository
 import dagger.hilt.android.scopes.ViewModelScoped
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -16,19 +17,22 @@ import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.tasks.await
 
 @ViewModelScoped
 class NotesRepository @Inject constructor(private val noteDao: NoteDao,
                                           private val api: NotesApiService,
-                                          private val preferencesManager: PreferencesManager) {
+                                          private val preferencesManager: PreferencesManager,
+                                          private val authRepository: AuthRepository) {
 
-    fun getAllNotes(): Flow<List<Note>> {
-        val userId = preferencesManager.getUserId() ?: return flowOf(emptyList<Note>())
+     fun getAllNotes(userId: String): Flow<List<Note>> {
         return noteDao.getAllNotes(userId)
     }
 
-    suspend fun insert(note: Note) = withContext(Dispatchers.IO) {
-        noteDao.insertNewNote(note)
+
+    suspend fun insert(note: Note, userId: String) = withContext(Dispatchers.IO) {
+        val noteWithUser = note.copy(userId = userId)
+        noteDao.insertNewNote(noteWithUser)
     }
 
     suspend fun update(note: Note) = withContext(Dispatchers.IO) {
@@ -43,7 +47,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
 
     // Métodos auxiliares para manejar NoteItem en el ViewModel
-    suspend fun insertNoteRemoteAndLocal(note: Note) = withContext(Dispatchers.IO) {
+    suspend fun insertNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: throw Exception("User not authenticated")
         val localId = noteDao.insertNewNote(note.copy(isSynced = false))
 
@@ -67,8 +71,19 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         }
     }
 
+    private suspend fun getAuthToken(): String? {
+        return try {
+            val firebaseUser = authRepository.getCurrentUser() ?: return null
+            val tokenResult = firebaseUser.getIdToken(false).await()
+            "Bearer ${tokenResult.token}"
+        } catch (e: Exception) {
+            Log.e("NotesRepository", "Failed to get auth token", e)
+            null
+        }
+    }
 
-    suspend fun updateNoteRemoteAndLocal(note: Note) = withContext(Dispatchers.IO) {
+
+    suspend fun updateNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
         val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId ?: "", userId)
         if (note.id == null) return@withContext
@@ -93,7 +108,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
     }
 
 
-    suspend fun deleteNoteRemoteAndLocal(note: Note) = withContext(Dispatchers.IO) {
+    suspend fun deleteNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         try {
             if (note.remoteId != null && note.remoteId.isNotEmpty()) {
                 val response = api.deleteNote(note.remoteId)
@@ -133,7 +148,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
     suspend fun syncNotesWithServer(userId: String) = withContext(Dispatchers.IO) {
         // 1. Sincronizar notas que foram criadas offline (sem remoteId)
-        val unsyncedNotes = noteDao.getUnsyncedNotes(userId).filter { !it.isDeleted }
+        val unsyncedNotes = noteDao.getUnsyncedNotes(userId).filter { !it.isDeleted && it.userId == userId }
 
         for (note in unsyncedNotes) {
             try {
@@ -203,5 +218,4 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
             }
         }
     }
-
 }

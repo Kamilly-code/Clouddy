@@ -15,11 +15,15 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.clouddy.application.core.utils.NetworkUtils
+import com.clouddy.application.data.repository.AuthRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
@@ -29,65 +33,101 @@ import kotlin.text.insert
 
 @HiltViewModel
 class NotesViewModel @Inject constructor(private val repository: NotesRepository,
-                                         private val preferencesManager: PreferencesManager) : ViewModel() {
+                                         private val preferencesManager: PreferencesManager,
+                                         private val authRepository: AuthRepository) : ViewModel() {
 
-    private val _isAuthenticated = kotlinx.coroutines.flow.MutableStateFlow(preferencesManager.getUserId() != null)
+    private val _isAuthenticated = MutableStateFlow(preferencesManager.getUserId() != null)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
-    private val userId = preferencesManager.getUserId() ?: throw IllegalStateException("User not authenticated")
+    private val _currentUserId = MutableStateFlow<String?>(null)
+    val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
 
-    val notes: StateFlow<List<NoteItem>> = repository.getAllNotes()
-        .map { list -> list.map { it.toNoteItem() } }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private val _notes = MutableStateFlow<List<NoteItem>>(emptyList())
+    val notes: StateFlow<List<NoteItem>> = _notes.asStateFlow()
+
 
     init {
-        if (userId != null) {
-            loadNotes()
-        }
-    }
+        viewModelScope.launch {
+            val userId = getUserId() ?: run {
+                Log.e("NotesViewModel", "UserId não encontrado")
+                _isAuthenticated.value = false
+                return@launch
+            }
 
-    fun loadNotes() {
-        userId?.let { uid ->
-            viewModelScope.launch(Dispatchers.IO) {
-                val backendOnline = repository.isBackendAvailable()
-                if (backendOnline) {
-                    repository.syncNotesWithServer(uid)
-                } else {
-                    Log.w("NotesViewModel", "Backend offline — usando somente dados locais")
-                }
+            _currentUserId.value = userId
+            _isAuthenticated.value = true
+
+            loadNotes(userId)
+            if (repository.isBackendAvailable()) {
+                syncNotesWithServer(userId)
             }
         }
     }
 
-    fun insert(note: Note) = viewModelScope.launch {
-        userId?.let { uid ->
-            val formattedDate = formatDate(LocalDate.now())
-            val noteWithFormattedDate = note.copy(date = formattedDate, userId = uid)
-            val newId = repository.insert(noteWithFormattedDate)
-            Log.d("INSERT", "Nota inserida com ID: $newId")
+
+            private fun getUserId(): String? {
+        val userId = preferencesManager.getUserId()
+        if (userId.isNullOrEmpty()) {
+            Log.e("NotesViewModel", "UserID vazio. Tentando recuperar do Firebase...")
+            val firebaseUser = authRepository.getCurrentUser()
+            firebaseUser?.uid?.let { uid ->
+                preferencesManager.saveUserId(uid)
+                return uid
+            }
+            return null
+        }
+        return userId
+    }
+
+    internal fun loadNotes(userId: String) {
+        viewModelScope.launch {
+            try {
+                repository.getAllNotes(userId)
+                    .map { notes -> notes.map { it.toNoteItem() } }
+                    .collect { notesList ->
+                        _notes.value = notesList
+                    }
+            } catch (e: Exception) {
+                Log.e("NotesViewModel", "Error loading notes", e)
+            }
         }
     }
 
 
-    // Métodos auxiliares para manejar NoteItem en el ViewModel
 
+    fun formatDate(date: LocalDate): String {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        return date.format(formatter)
+    }
+
+    fun insert(note: Note) = viewModelScope.launch {
+        currentUserId.value?.let { userId ->
+            val formattedDate = formatDate(LocalDate.now())
+            val noteWithUser = note.copy(
+                date = formattedDate,
+                userId = userId,
+                isSynced = false
+            )
+            val newId = repository.insert(noteWithUser, userId)
+            Log.d("INSERT", "Nota inserida com ID: $newId")
+        } ?: run {
+            Log.e("INSERT", "Tentativa de inserir nota sem usuário autenticado")
+        }
+    }
 
     fun insertOrUpdateNote(note: Note) {
-        userId?.let { uid ->
-            viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
+            currentUserId.value?.let { userId ->
+                val noteWithUser = note.copy(userId = userId)
                 val isConnected = repository.isBackendAvailable()
-                val noteWithUser = note.copy(userId = uid)
+
                 if (isConnected) {
                     if (note.remoteId == null) {
-                        repository.insertNoteRemoteAndLocal(noteWithUser)
+                        repository.insertNoteRemoteAndLocal(noteWithUser, userId)
                     } else if (note.isUpdated) {
-                        repository.updateNoteRemoteAndLocal(noteWithUser)
+                        repository.updateNoteRemoteAndLocal(noteWithUser, userId)
                     } else {
-                        Log.d("NotesViewModel", "Nota já sincronizada — nenhuma ação necessária.")
+                        Log.d("NotesViewModel", "Nota já sincronizada")
                     }
                 } else {
                     val localNote = if (note.remoteId == null) {
@@ -95,66 +135,73 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
                     } else {
                         noteWithUser.copy(isUpdated = true, isSynced = false)
                     }
-                    repository.insert(localNote)
+                    repository.insert(localNote, userId)
+                }
+
+                // FORÇAR atualização da lista após inserção/atualização
+                repository.getAllNotes(userId).collect { notes ->
+                    _notes.value = notes.map { it.toNoteItem() }
                 }
             }
         }
     }
 
-    fun updateNote(note: Note, context: Context) {
-        userId?.let { uid ->
-            viewModelScope.launch {
-                val noteWithUser = note.copy(userId = uid)
-                if (note.remoteId == null) {
-                    repository.insert(noteWithUser)
-                    Log.e("ViewModel", "Tentou atualizar nota sem remoteId. Inserindo local.")
-                } else {
-                    repository.updateNoteRemoteAndLocal(noteWithUser)
-                }
-            }
+
+fun updateNote(note: Note, context: Context) {
+    viewModelScope.launch {
+        currentUserId.value?.let { userId ->
+        val noteWithUser = note.copy(userId =  userId)
+        if (note.remoteId == null) {
+            repository.insert(noteWithUser, userId)
+            Log.e("ViewModel", "Tentou atualizar nota sem remoteId. Inserindo local.")
+        } else {
+            repository.updateNoteRemoteAndLocal(noteWithUser, userId)
         }
     }
+}
+}
 
     fun deleteNote(note: Note, context: Context) {
-        userId?.let { uid ->
-            viewModelScope.launch(Dispatchers.IO) {
-                val noteWithUser = note.copy(userId = uid)
+        viewModelScope.launch(Dispatchers.IO) {
+            currentUserId.value?.let { userId ->
+                val noteWithUser = note.copy(userId = userId)
                 val networkUtils = NetworkUtils()
                 if (networkUtils.isConnected(context)) {
-                    repository.deleteNoteRemoteAndLocal(noteWithUser)
+                    repository.deleteNoteRemoteAndLocal(noteWithUser, userId)
                 } else {
                     val localNote = noteWithUser.copy(isDeleted = true, isSynced = false)
-                    repository.updateNoteRemoteAndLocal(localNote)
+                    repository.updateNoteRemoteAndLocal(localNote, userId)
                 }
             }
         }
     }
 
+
     fun syncNotesIfNeeded() {
-        userId?.let { uid ->
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.syncNotesWithServer(uid)
+        viewModelScope.launch(Dispatchers.IO) {
+            currentUserId.value?.let { userId ->
+                repository.syncNotesWithServer(userId)
             }
         }
     }
 
-    fun syncNotesWithServer() {
-        userId?.let { uid ->
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.syncNotesWithServer(uid)
+    fun syncNotesWithServer(userId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            currentUserId.value?.let { userId ->
+                repository.syncNotesWithServer(userId)
             }
         }
-    }
 
-    fun formatDate(date: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        return date.format(formatter)
-    }
+        fun formatDate(date: LocalDate): String {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            return date.format(formatter)
+        }
 
-    fun getNotesByDate(date: LocalDate): Flow<List<Note>> {
-        val formattedDate = formatDate(date)
-        return userId?.let { uid ->
-            repository.getNotesByDate(formattedDate, uid)
-        } ?: kotlinx.coroutines.flow.flowOf(emptyList())
+        fun getNotesByDate(date: LocalDate): Flow<List<Note>> {
+            val formattedDate = formatDate(date)
+            return currentUserId.value?.let { userId ->
+                repository.getNotesByDate(formattedDate, userId)
+            } ?: flowOf(emptyList())
+        }
     }
 }

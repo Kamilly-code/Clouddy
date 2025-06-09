@@ -35,6 +35,12 @@ fun NotesApp(navigateToTask: () -> Unit) {
     val density = LocalDensity.current
     val anchors = mapOf(0f to 0, 300f * density.density to 1)
 
+    LaunchedEffect(Unit) {
+        viewModel.currentUserId.value?.let { userId ->
+            viewModel.loadNotes(userId)
+        }
+    }
+
     if (isAddingNote || selectedNote != null) {
         AddNote(
             viewModel = viewModel,

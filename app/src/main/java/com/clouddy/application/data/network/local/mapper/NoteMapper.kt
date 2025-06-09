@@ -15,7 +15,8 @@ fun Note.toNoteItem(): NoteItem {
         date = this.date.orEmpty(),
         isSynced = this.isSynced,
         isDeleted = this.isDeleted,
-        isUpdated = this.isUpdated
+        isUpdated = this.isUpdated,
+        userId = this.userId
     )
 }
 

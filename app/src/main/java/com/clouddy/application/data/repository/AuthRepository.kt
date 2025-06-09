@@ -120,6 +120,7 @@ class AuthRepository @Inject constructor(
     // --- LOGOUT ---
     fun signOut(onResult: () -> Unit) {
         firebaseClient.auth.signOut()
+        preferencesManager.clearUserId()
         onResult()
     }
 

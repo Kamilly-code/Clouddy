@@ -44,6 +44,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.runtime.collectAsState
 import com.clouddy.application.data.network.local.mapper.toNote
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 
@@ -58,9 +61,11 @@ fun NotesListScreen(
     var query by remember { mutableStateOf("") }
     val context = LocalContext.current
 
+    val currentUserId by viewModel.currentUserId.collectAsState()
+
     val filteredNotes = notes.filter {
         (it.title ?: "").contains(query, ignoreCase = true) ||
-                (it.note ?: "").contains(query, ignoreCase = true)
+        (it.note ?: "").contains(query, ignoreCase = true)
     }
 
 
@@ -89,6 +94,8 @@ fun NotesListScreen(
             }
         }
     }
+
+    val isLoading = remember { mutableStateOf(false) }
 
     ClouddyTheme {
         Scaffold(
@@ -151,7 +158,9 @@ fun NotesListScreen(
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             items(filteredNotes, key = {it.id ?: filteredNotes.indexOf(it) }) { noteItem ->
-                                NoteItemView(noteItem, onClick = { onNoteClicked(noteItem.toNote(userId = "")) })
+                                NoteItemView(noteItem, onClick = {
+                                    onNoteClicked(noteItem.toNote(userId = currentUserId ?: ""))
+                                })
                             }
 
                         }

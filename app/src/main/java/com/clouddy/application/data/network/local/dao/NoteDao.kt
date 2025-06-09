@@ -1,7 +1,6 @@
 package com.clouddy.application.data.network.local.dao
 
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -21,7 +20,6 @@ interface NoteDao {
 
     @Update
     suspend fun updateNote(note: Note)
-
 
     @Query("SELECT * FROM notes_table WHERE isDeleted = 0 AND userId = :userId")
     fun getAllNotes(userId: String): Flow<List<Note>>
@@ -44,5 +42,11 @@ interface NoteDao {
 
     @Query("DELETE FROM notes_table WHERE id = :id AND userId = :userId")
     suspend fun deleteById(id: Long, userId: String)
+
+    @Query("DELETE FROM notes_table WHERE remoteId = :remoteId AND userId = :userId")
+    suspend fun deleteByRemoteId(remoteId: String, userId: String)
+
+    @Query("DELETE FROM notes_table WHERE userId = :userId")
+    suspend fun deleteAllNotesForUser(userId: String)
 
 }

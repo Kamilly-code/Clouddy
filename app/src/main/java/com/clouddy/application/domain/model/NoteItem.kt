@@ -10,5 +10,6 @@ data class NoteItem(val id: Long? = null,
                     val date: String = LocalDate.now().toString(),
                     val isSynced: Boolean = false,
                     val isDeleted: Boolean = false,
-                    val isUpdated: Boolean = false)
+                    val isUpdated: Boolean = false,
+                    val userId: String)
 

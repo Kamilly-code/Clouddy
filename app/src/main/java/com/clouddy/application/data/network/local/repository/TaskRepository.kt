@@ -56,7 +56,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
                         userId = userId
                     )
                     taskDao.updateFull(updated)
-            } }
+                } }
         } catch (e: Exception) {
             Log.e("API", "Erro ao inserir tarefa remota: ${e.message}")
         }
@@ -77,34 +77,34 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
                 }
             } else {
                 taskDao.updateFull(task.copy(isSynced = false, isUpdated = true))
-                }
+            }
 
-            } catch (e: Exception) {
-                Log.e("API", "Erro ao atualizar tarefa: ${e.message}")
-                taskDao.updateFull(task.copy(isSynced = false, isUpdated = true))
+        } catch (e: Exception) {
+            Log.e("API", "Erro ao atualizar tarefa: ${e.message}")
+            taskDao.updateFull(task.copy(isSynced = false, isUpdated = true))
         }
     }
 
     suspend fun deleteTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
-       try {
-           if (task.remoteId != null && task.remoteId.isNotEmpty()) {
-               val response = api.deleteTask(task.remoteId)
-               if (response.isSuccessful) {
-                   taskDao.delete(task)
-               } else {
-                   Log.e("API", "Erro ao deletar tarefa remota: ${response.message()}")
-                   val markedTask = task.copy(isDeleted = true, isSynced = false)
-                   taskDao.updateFull(markedTask)
-               }
-           } else {
-               val markedTask = task.copy(isDeleted = true, isSynced = false)
-               taskDao.updateFull(markedTask)
-           }
+        try {
+            if (task.remoteId != null && task.remoteId.isNotEmpty()) {
+                val response = api.deleteTask(task.remoteId)
+                if (response.isSuccessful) {
+                    taskDao.delete(task)
+                } else {
+                    Log.e("API", "Erro ao deletar tarefa remota: ${response.message()}")
+                    val markedTask = task.copy(isDeleted = true, isSynced = false)
+                    taskDao.updateFull(markedTask)
+                }
+            } else {
+                val markedTask = task.copy(isDeleted = true, isSynced = false)
+                taskDao.updateFull(markedTask)
+            }
 
-       }catch (e: Exception) {
-           Log.e("API", "Erro ao deletar tarefa: ${e.message}")
+        }catch (e: Exception) {
+            Log.e("API", "Erro ao deletar tarefa: ${e.message}")
 
-       }
+        }
     }
 
     suspend fun isBackendAvailable(): Boolean = withContext(Dispatchers.IO) {
