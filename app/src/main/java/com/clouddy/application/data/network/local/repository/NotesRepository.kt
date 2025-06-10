@@ -48,23 +48,26 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
     // Métodos auxiliares para manejar NoteItem en el ViewModel
     suspend fun insertNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext
         val userId = preferencesManager.getUserId() ?: throw Exception("User not authenticated")
         val localId = noteDao.insertNewNote(note.copy(isSynced = false))
 
         try {
-            val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId)
-            val response = api.insertNote(dto)
+            val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId, date = note.date)
+            val response = api.insertNote(dto,token)
 
             if (response.isSuccessful) {
                 response.body()?.let { savedNote ->
                     val updated = note.copy(
                         id = localId,
-                        remoteId = savedNote.id.toString(),
+                        remoteId = savedNote.remoteId,
                         userId = userId,
                         isSynced = true
                     )
                     noteDao.updateNote(updated)
                 }
+            } else {
+                Log.e("API", "Erro ao salvar nota no backend: ${response.message()}")
             }
         } catch (e: Exception) {
             Log.e("API", "Erro ao conectar com servidor: ${e.message}")
@@ -84,14 +87,15 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
 
     suspend fun updateNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext
         val userId = preferencesManager.getUserId() ?: return@withContext
-        val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId ?: "", userId)
+        val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId ?: "", userId, date = note.date)
         if (note.id == null) return@withContext
 
         try {
             if (!note.remoteId.isNullOrEmpty()) {
-                val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId = note.userId)
-                val response = api.updateNote(note.remoteId, dto)
+                val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId = note.userId, date = note.date)
+                val response = api.updateNote(note.remoteId, dto,token)
 
                 if (response.isSuccessful) {
                     noteDao.updateNote(note.copy(isSynced = true, isUpdated = false))
@@ -110,23 +114,21 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
     suspend fun deleteNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         try {
+            val token = getAuthToken() ?: return@withContext
             if (note.remoteId != null && note.remoteId.isNotEmpty()) {
-                val response = api.deleteNote(note.remoteId)
+                val response = api.deleteNote(note.remoteId, token)
                 if (response.isSuccessful) {
                     noteDao.delete(note)
                 } else {
                     Log.e("API", "Erro ao deletar no servidor: ${response.message()}")
-                    val markedNote = note.copy(isDeleted = true, isSynced = false)
-                    noteDao.updateNote(markedNote)
+                    noteDao.delete(note)
                 }
             } else {
-                val markedNote = note.copy(isDeleted = true, isSynced = false)
-                noteDao.updateNote(markedNote)
+                noteDao.delete(note)
             }
         } catch (e: Exception) {
             Log.e("API", "Erro de conexão: ${e.message}")
-            val markedNote = note.copy(isDeleted = true, isSynced = false)
-            noteDao.updateNote(markedNote)
+            noteDao.delete(note)
         }
     }
 
@@ -154,8 +156,8 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
             try {
                 if (note.remoteId.isNullOrEmpty()) {
                     // Criar nova nota no servidor
-                    val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId)
-                    val response = api.insertNote(request)
+                    val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId, date = note.date)
+                    val response = api.insertNote(request, getAuthToken() ?: "")
 
                     if (response.isSuccessful) {
                         response.body()?.let { serverNote ->
@@ -180,8 +182,8 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
         for (note in updatedNotes) {
             try {
-                val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId)
-                val response = api.updateNote(note.remoteId!!, request)
+                val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId, date = note.date)
+                val response = api.updateNote(note.remoteId!!, request, getAuthToken() ?: "")
 
                 if (response.isSuccessful) {
                     val syncedNote = note.copy(
@@ -203,7 +205,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         for (note in deletedNotes) {
             try {
                 if (!note.remoteId.isNullOrEmpty()) {
-                    val response = api.deleteNote(note.remoteId!!)
+                    val response = api.deleteNote(note.remoteId!!, getAuthToken() ?: "")
                     if (response.isSuccessful) {
                         noteDao.delete(note)
                     } else {

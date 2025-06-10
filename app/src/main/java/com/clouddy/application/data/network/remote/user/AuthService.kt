@@ -35,9 +35,6 @@ class AuthService @Inject constructor(private val firebase: FirebaseClient)  {
         firebase.auth.currentUser?.reload()?.await()
         return firebase.auth.currentUser?.isEmailVerified ?: false
     }
-
-
-
     private fun Result<AuthResult>.toLoginResult() = when (val result = getOrNull()) {
         null -> LoginResult.Error
         else -> {

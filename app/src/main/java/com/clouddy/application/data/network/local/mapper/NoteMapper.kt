@@ -39,6 +39,7 @@ fun NoteItem.toNoteRequestDto(userId: String): NoteRequestDto {
         title = this.title,
         note = this.note,
         remoteId = this.remoteId ?: "",
-        userId = userId
+        userId = userId,
+        date = this.date
     )
 }

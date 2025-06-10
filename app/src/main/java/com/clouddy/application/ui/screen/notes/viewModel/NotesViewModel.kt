@@ -166,16 +166,21 @@ fun updateNote(note: Note, context: Context) {
             currentUserId.value?.let { userId ->
                 val noteWithUser = note.copy(userId = userId)
                 val networkUtils = NetworkUtils()
-                if (networkUtils.isConnected(context)) {
-                    repository.deleteNoteRemoteAndLocal(noteWithUser, userId)
-                } else {
-                    val localNote = noteWithUser.copy(isDeleted = true, isSynced = false)
-                    repository.updateNoteRemoteAndLocal(localNote, userId)
+
+                // Sempre deleta localmente primeiro
+                repository.delete(noteWithUser)
+
+                // Se tiver conexão e remoteId, tenta deletar no servidor
+                if (networkUtils.isConnected(context) && !note.remoteId.isNullOrEmpty()) {
+                    try {
+                        repository.deleteNoteRemoteAndLocal(noteWithUser, userId)
+                    } catch (e: Exception) {
+                        Log.e("NotesViewModel", "Failed to delete note remotely", e)
+                    }
                 }
             }
         }
     }
-
 
     fun syncNotesIfNeeded() {
         viewModelScope.launch(Dispatchers.IO) {
