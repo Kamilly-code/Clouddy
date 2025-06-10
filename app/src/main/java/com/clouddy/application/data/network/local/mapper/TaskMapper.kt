@@ -11,7 +11,8 @@ fun Task.toTaskItem(): TaskItem = TaskItem(
     isCompleted = this.isCompleted,
     isSynced = this.isSynced,
     isUpdated = this.isUpdated,
-    isDeleted = this.isDeleted
+    isDeleted = this.isDeleted,
+    userId = this.userId
 )
 
 fun TaskItem.toTask(userId: String): Task = Task(

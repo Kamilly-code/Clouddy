@@ -50,7 +50,7 @@ class PomodoroRepository @Inject constructor(
             val authToken = getAuthToken()
             val request = PomodoroMapper.toRequest(pomodoro.copy(userId = userId))
             val response = if (authToken != null) {
-                api.insertPomodoro(request) // Assumindo que a API não requer auth para inserção
+                api.insertPomodoro(request, authToken) // Assumindo que a API não requer auth para inserção
             } else {
                 throw Exception("Not authenticated")
             }
@@ -63,7 +63,7 @@ class PomodoroRepository @Inject constructor(
                 val authToken = getAuthToken()
                 val request = PomodoroMapper.toRequest(pomodoro)
                 val response = if (authToken != null) {
-                    api.updatePomodoro(pomodoro.id, request) // Assumindo que a API não requer auth para inserção
+                    api.updatePomodoro(pomodoro.id, request, authToken) // Assumindo que a API não requer auth para inserção
                 } else {
                     throw Exception("Not authenticated")
                 }
@@ -90,7 +90,7 @@ class PomodoroRepository @Inject constructor(
         try {
             val authToken = getAuthToken() ?: throw Exception("Not authenticated")
             val request = PomodoroMapper.toRequest(pomodoro.copy(userId = userId))
-            val response = api.updatePomodoro(pomodoro.id ?: 0L, request)
+            val response = api.updatePomodoro(pomodoro.id ?: 0L, request, authToken)
             val updated = PomodoroMapper.fromResponse(response)
             pomodoroDao.updatePomodoro(updated)
         } catch (e: Exception) {
@@ -108,7 +108,7 @@ class PomodoroRepository @Inject constructor(
         val userId = preferencesManager.getUserId() ?: return
         try {
             val authToken = getAuthToken() ?: throw Exception("Not authenticated")
-            val response = api.getPomodoroSettings() // Assumindo que o endpoint já inclui o auth token
+            val response = api.getPomodoroSettings(authToken) // Assumindo que o endpoint já inclui o auth token
             if (response.isSuccessful) {
                 val dto = response.body()
                 dto?.let {

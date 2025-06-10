@@ -2,4 +2,6 @@ package com.clouddy.application.data.network.remote.task
 
 data class TaskRequestDto(val tarea: String,
                           val isCompleted: Boolean,
-                          val remoteId: String)
+                          val remoteId: String,
+                          val userId: String,
+                          val date: String)

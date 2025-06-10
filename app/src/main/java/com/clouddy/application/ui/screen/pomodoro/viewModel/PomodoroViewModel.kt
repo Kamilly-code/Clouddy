@@ -108,11 +108,13 @@ class PomodoroViewModel @Inject constructor(
             )
 
             repository.insertPomodoro(updatedPomodoro)
+            repository.getPomodoroSettings(userId).first { it != null }
 
             _pomodoroSettings.value = updatedPomodoro
             _currentRound.value = 0
             _isCycleFinished.value = false
 
+            Log.d("PomodoroViewModel", "Saved Pomodoro settings: $updatedPomodoro")
 
             withContext(Dispatchers.Main) {
                 onComplete()

@@ -5,12 +5,15 @@ import androidx.lifecycle.LiveData
 import com.clouddy.application.PreferencesManager
 import com.clouddy.application.data.network.local.dao.TaskDao
 import com.clouddy.application.data.network.local.entity.Task
+import com.clouddy.application.data.network.remote.note.NoteRequestDto
 import com.clouddy.application.data.network.remote.task.TaskApiService
 import com.clouddy.application.data.network.remote.task.TaskRequestDto
+import com.clouddy.application.data.repository.AuthRepository
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
@@ -19,14 +22,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @ViewModelScoped
-class TaskRepository @Inject constructor(private val taskDao: TaskDao, private val api: TaskApiService,
-                                         private val preferencesManager: PreferencesManager) {
+class TaskRepository @Inject constructor(private val taskDao: TaskDao,
+                                         private val api: TaskApiService,
+                                         private val preferencesManager: PreferencesManager,
+                                         private val authRepository: AuthRepository) {
     fun getAllTasks(userId: String): Flow<List<Task>> {
         return taskDao.getAllTasks(userId)
     }
 
     suspend fun insert(task: Task, userId: String) = withContext(Dispatchers.IO) {
-        taskDao.insertNewTask(task.copy(userId = userId))
+        val taskWithUser = task.copy(userId = userId)
+        taskDao.insertNewTask(taskWithUser)
     }
 
     suspend fun update(task: Task) = withContext(Dispatchers.IO) {
@@ -37,36 +43,54 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
         taskDao.delete(task)
     }
 
-    suspend fun insertTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
+    suspend fun insertTaskRemoteAndLocal(task: Task, userId: String) = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext
         val userId = preferencesManager.getUserId() ?: return@withContext
         val localId = taskDao.insertNewTask(task.copy(isSynced = false))
 
         try {
-            val dto = TaskRequestDto(task.task, task.isCompleted, "")
-            val response = api.insertTask(dto)
+            val dto = TaskRequestDto(task.task, task.isCompleted, "", userId, date = task.date)
+            val response = api.insertTask(dto, token)
 
             if (response.isSuccessful) {
                 response.body()?.let { remote ->
+                    // Atualiza a tarefa local com o remoteId e marca como sincronizada
                     val updated = task.copy(
                         id = localId,
-                        remoteId = remote.id.toString(),
+                        remoteId = remote.remoteId, // Certifique-se que o backend retorna o remoteId
                         isSynced = true,
                         userId = userId
                     )
                     taskDao.updateFull(updated)
-                } }
+                }
+            } else {
+                Log.e("API", "Erro ao salvar tarefa no backend: ${response.message()}")
+            }
         } catch (e: Exception) {
-            Log.e("API", "Erro ao inserir tarefa remota: ${e.message}")
+            Log.e("API", "Erro ao conectar com servidor: ${e.message}")
         }
     }
 
-    suspend fun updateTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
+    private suspend fun getAuthToken(): String? {
+        return try {
+            val firebaseUser = authRepository.getCurrentUser() ?: return null
+            val tokenResult = firebaseUser.getIdToken(false).await()
+            "Bearer ${tokenResult.token}"
+        } catch (e: Exception) {
+            Log.e("NotesRepository", "Failed to get auth token", e)
+            null
+        }
+    }
+
+    suspend fun updateTaskRemoteAndLocal(task: Task, userId: String) = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext
         val userId = preferencesManager.getUserId() ?: return@withContext
+        val dto = TaskRequestDto(task.task, task.isCompleted, task.remoteId ?: "", userId, date = task.date)
         if (task.id == null) return@withContext
         try {
             if (!task.remoteId.isNullOrEmpty()) {
-                val dto = TaskRequestDto(task.task, task.isCompleted, task.remoteId)
-                val response = api.updateTaskStatus(task.remoteId, task.isCompleted, dto)
+                val dto = TaskRequestDto(task.task, task.isCompleted, task.remoteId!!, userId = task.userId, date = task.date)
+                val response = api.updateTaskStatus(task.remoteId, task.isCompleted, dto, token)
 
                 if (response.isSuccessful){
                     taskDao.updateFull(task.copy(isSynced = true, isUpdated = false))
@@ -83,26 +107,25 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
         }
     }
 
-    suspend fun deleteTaskRemoteAndLocal(task: Task) = withContext(Dispatchers.IO) {
+    suspend fun deleteTaskRemoteAndLocal(task: Task, userId: String) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
 
         try {
+            val token = getAuthToken() ?: return@withContext
             if (!task.remoteId.isNullOrEmpty()) {
-                val response = api.deleteTask(task.remoteId)
+                val response = api.deleteTask(task.remoteId, token)
                 if (response.isSuccessful) {
                     taskDao.delete(task)
                 } else {
-                    // Marcar como deletado para sincronização posterior
-                    taskDao.updateFull(task.copy(isDeleted = true, isSynced = false, userId = userId))
+                    Log.e("API", "Erro ao deletar no servidor: ${response.message()}")
+                    taskDao.delete(task)
                 }
             } else {
-                // Se não tem remoteId, apenas deletar localmente
                 taskDao.delete(task)
             }
         } catch (e: Exception) {
-            // Em caso de erro, marcar como deletado para tentar novamente depois
-            taskDao.updateFull(task.copy(isDeleted = true, isSynced = false, userId = userId))
-            Log.e("API", "Erro ao deletar tarefa: ${e.message}")
+            Log.e("API", "Erro de conexão: ${e.message}")
+            taskDao.delete(task)
         }
     }
 
@@ -125,25 +148,31 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
 
     suspend fun syncTasksWithServer(userId: String) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
-        val unsyncedTasks = taskDao.getAllUnsyncedTasks(userId).filter {!it.isDeleted }
+        val unsyncedTasks = taskDao.getAllUnsyncedTasks(userId).filter {
+            !it.isDeleted && it.userId == userId && (it.remoteId.isNullOrEmpty())
+        }
         for (task in unsyncedTasks) {
             try {
-                if (task.remoteId.isNullOrEmpty()) {
-                    val request = TaskRequestDto(task.task, task.isCompleted, "")
-                    val response = api.insertTask(request)
+                val request = TaskRequestDto(
+                    task.task,
+                    task.isCompleted,
+                    "",
+                    userId,
+                    date = task.date
+                )
+                val response = api.insertTask(request, getAuthToken() ?: "")
 
-                    if (response.isSuccessful) {
-                        response.body()?.let { serverTask ->
-                            val syncedTask = task.copy(
-                                remoteId = serverTask.id.toString(),
-                                isSynced = true,
-                                isUpdated = false
-                            )
-                            taskDao.updateFull(syncedTask)
-                        }
-                    } else {
-                        Log.e("Sync", "Erro ao criar tarefa: ${response.message()}")
+                if (response.isSuccessful) {
+                    response.body()?.let { serverTask ->
+                        val syncedTask = task.copy(
+                            remoteId = serverTask.remoteId, // Usar o remoteId do servidor
+                            isSynced = true,
+                            isUpdated = false
+                        )
+                        taskDao.updateFull(syncedTask)
                     }
+                } else {
+                    Log.e("Sync", "Erro ao criar tarefa: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Log.e("Sync", "Falha ao criar tarefa (id=${task.id}): ${e.message}")
@@ -153,8 +182,14 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
         val updatedTasks = taskDao.getAllUpdatedTasks(userId).filter { !it.remoteId.isNullOrEmpty() && !it.isDeleted }
         for (task in updatedTasks) {
             try {
-                val request = TaskRequestDto(task.task, task.isCompleted, task.remoteId!!)
-                val response = api.updateTaskStatus(task.remoteId!!, task.isCompleted, request)
+                val request = TaskRequestDto(
+                    task.task,
+                    task.isCompleted,
+                    task.remoteId!!,
+                    userId,
+                    date = task.date
+                )
+                val response = api.updateTaskStatus(task.remoteId!!, task.isCompleted, request, getAuthToken() ?: "")
 
                 if (response.isSuccessful) {
                     val syncedTask = task.copy(
@@ -173,15 +208,11 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao, private v
         val deletedTasks = taskDao.getAllDeletedTasks(userId).filter { !it.remoteId.isNullOrEmpty() }
         for (task in deletedTasks) {
             try {
-                if(!task.remoteId.isNullOrEmpty()) {
-                    val response = api.deleteTask(task.remoteId!!)
-                    if (response.isSuccessful) {
-                        taskDao.delete(task)
-                    } else {
-                        Log.e("Sync", "Erro ao deletar tarefa remota: ${response.message()}")
-                    }
-                } else{
+                val response = api.deleteTask(task.remoteId!!, getAuthToken() ?: "")
+                if (response.isSuccessful) {
                     taskDao.delete(task)
+                } else {
+                    Log.e("Sync", "Erro ao deletar tarefa remota: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Log.e("Sync", "Falha ao deletar tarefa (id=${task.id}): ${e.message}")

@@ -7,4 +7,5 @@ data class TaskItem(val id: Long? = null,
                     val date: String,
                     val isSynced: Boolean = false,
                     val isUpdated: Boolean = false,
-                    val isDeleted: Boolean = false)
+                    val isDeleted: Boolean = false,
+                    val userId: String)

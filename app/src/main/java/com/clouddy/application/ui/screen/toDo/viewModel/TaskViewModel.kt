@@ -93,7 +93,7 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
                 isSynced = false,
                 userId = userId
             )
-            repository.insertTaskRemoteAndLocal(taskWithUser)
+            repository.insertTaskRemoteAndLocal(taskWithUser, userId)
         }
     }
 
@@ -103,9 +103,9 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
                 val isConnected = repository.isBackendAvailable()
                 if (isConnected) {
                     if (task.remoteId == null) {
-                        repository.insertTaskRemoteAndLocal(task)
+                        repository.insertTaskRemoteAndLocal(task, userId)
                     } else if (task.isUpdated) {
-                        repository.updateTaskRemoteAndLocal(task)
+                        repository.updateTaskRemoteAndLocal(task, userId)
                     } else {
                         Log.d("TaskViewModel", "Tarefa já sincronizada — nenhuma ação necessária.")
                     }
@@ -129,10 +129,10 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
                 val taskWithUser = task.copy(userId = userId)
                 val networkUtils = NetworkUtils()
                 if (networkUtils.isConnected(context)) {
-                    repository.deleteTaskRemoteAndLocal(taskWithUser)
+                    repository.deleteTaskRemoteAndLocal(taskWithUser, userId)
                 } else {
                     val localTask = task.copy(isDeleted = true, isSynced = false, userId = userId)
-                    repository.updateTaskRemoteAndLocal(localTask)
+                    repository.updateTaskRemoteAndLocal(localTask, userId)
                 }
             }
         }
@@ -153,7 +153,7 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
                 if (task.remoteId == null) {
                     repository.insert(updatedTask, userId)
                 } else {
-                    repository.updateTaskRemoteAndLocal(updatedTask)
+                    repository.updateTaskRemoteAndLocal(updatedTask, userId)
                 }
             }
         }
@@ -179,9 +179,9 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
 
             if (isConnected) {
                 if (task.remoteId == null) {
-                    repository.insertTaskRemoteAndLocal(task)
+                    repository.insertTaskRemoteAndLocal(task, task.userId)
                 } else if (task.isUpdated) {
-                    repository.updateTaskRemoteAndLocal(task)
+                    repository.updateTaskRemoteAndLocal(task, task.userId)
                 } else {
                     Log.d("TaskViewModel", "Tarefa já sincronizada — nenhuma ação necessária.")
                 }

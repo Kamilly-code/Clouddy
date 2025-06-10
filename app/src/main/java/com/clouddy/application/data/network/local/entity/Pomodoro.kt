@@ -19,5 +19,6 @@ data class Pomodoro(
     @ColumnInfo(name = "currentState") val currentState: PomodoroState = PomodoroState.IDLE,
     @ColumnInfo(name = "currentRound") val currentRound: Int = 0,
     val lastUpdatedDate: String? = LocalDate.now().toString(),
-    @ColumnInfo(name = "userId") val userId: String
+    @ColumnInfo(name = "userId") val userId: String,
+    @ColumnInfo(name = "remoteId") val remoteId: String? = null
 )

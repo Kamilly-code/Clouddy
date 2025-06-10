@@ -9,5 +9,6 @@ data class PomodoroRequestDto(
     val currentState: String,
     val currentRound: Int,
     val lastUpdatedDate: String,
-    val userId: String
+    val userId: String,
+    val remoteId: String
 )

@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 
 @ViewModelScoped

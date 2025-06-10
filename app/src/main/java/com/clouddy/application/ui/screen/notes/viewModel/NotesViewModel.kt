@@ -65,7 +65,7 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
     }
 
 
-            private fun getUserId(): String? {
+        private fun getUserId(): String? {
         val userId = preferencesManager.getUserId()
         if (userId.isNullOrEmpty()) {
             Log.e("NotesViewModel", "UserID vazio. Tentando recuperar do Firebase...")
