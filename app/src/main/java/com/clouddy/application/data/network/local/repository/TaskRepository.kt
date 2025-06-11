@@ -132,7 +132,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao,
 
     suspend fun isBackendAvailable(): Boolean = withContext(Dispatchers.IO) {
         try {
-            val url = URL("http://10.0.2.2:4000/ping")
+            val url = URL("https://crud-production-d19c.up.railway.app/ping")
             val connection = url.openConnection() as HttpURLConnection
             connection.connectTimeout = 1000
             connection.readTimeout = 1000

@@ -30,7 +30,7 @@ object NetworkModule {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:4000/")
+            .baseUrl("https://crud-production-d19c.up.railway.app/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
