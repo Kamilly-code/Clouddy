@@ -101,36 +101,50 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
     }
 
     fun insert(note: Note) = viewModelScope.launch {
-        currentUserId.value?.let { userId ->
-            val formattedDate = formatDate(LocalDate.now())
-            val noteWithUser = note.copy(
-                date = formattedDate,
-                userId = userId,
-                isSynced = false
-            )
-            val newId = repository.insert(noteWithUser, userId)
-            Log.d("INSERT", "Nota inserida com ID: $newId")
-        } ?: run {
+        val userId = currentUserId.value
+        if (userId.isNullOrEmpty()) {
             Log.e("INSERT", "Tentativa de inserir nota sem usuário autenticado")
+            return@launch
+        }
+
+        val formattedDate = formatDate(LocalDate.now())
+        val noteWithUser = note.copy(
+            date = formattedDate,
+            userId = userId,
+            isSynced = false,
+            remoteId = null
+        )
+
+        val isOnline = repository.isBackendAvailable()
+
+        if (isOnline) {
+            Log.d("INSERT", "Online: tentando inserir local e remoto")
+            repository.insertNoteRemoteAndLocal(noteWithUser, userId)
+        } else {
+            Log.d("INSERT", "Offline: salvando localmente")
+            repository.insert(noteWithUser, userId)
+            // Opcional: forçar sincronização depois
+            repository.syncNotesWithServer(userId)
         }
     }
 
     fun insertOrUpdateNote(note: Note) {
         viewModelScope.launch(Dispatchers.IO) {
-            currentUserId.value?.let { userId ->
+            try {
+                val userId = currentUserId.value ?: throw IllegalStateException("User not authenticated")
                 val noteWithUser = note.copy(userId = userId)
                 val isConnected = repository.isBackendAvailable()
-
                 if (isConnected) {
-                    if (note.remoteId == null) {
+                    if (note.remoteId.isNullOrEmpty()) {
                         repository.insertNoteRemoteAndLocal(noteWithUser, userId)
-                    } else if (note.isUpdated) {
-                        repository.updateNoteRemoteAndLocal(noteWithUser, userId)
+                        loadNotes(userId)
                     } else {
-                        Log.d("NotesViewModel", "Nota já sincronizada")
+                        repository.updateNoteRemoteAndLocal(noteWithUser, userId)
+                        loadNotes(userId)
                     }
                 } else {
-                    val localNote = if (note.remoteId == null) {
+                    Log.d("NotesViewModel", "Nota já sincronizada")
+                    val localNote = if (note.remoteId.isNullOrEmpty()) {
                         noteWithUser.copy(isSynced = false)
                     } else {
                         noteWithUser.copy(isUpdated = true, isSynced = false)
@@ -142,6 +156,8 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
                 repository.getAllNotes(userId).collect { notes ->
                     _notes.value = notes.map { it.toNoteItem() }
                 }
+            } catch (e: Exception) {
+                Log.e("NotesViewModel", "Erro ao inserir/atualizar nota", e)
             }
         }
     }

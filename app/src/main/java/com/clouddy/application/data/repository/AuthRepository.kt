@@ -28,6 +28,10 @@ class AuthRepository @Inject constructor(
     private val apiService: ApiService,
     private val preferencesManager: PreferencesManager
 ) {
+
+    private var cachedToken: String? = null
+    private var tokenExpiration: Long = 0
+
     private val coroutineScope = CoroutineScope(Dispatchers.IO + CoroutineExceptionHandler { _, e ->
         Log.e("AuthRepository", "Coroutine error", e)
     })
@@ -36,10 +40,29 @@ class AuthRepository @Inject constructor(
         return firebaseClient.auth.currentUser
     }
 
+    suspend fun getValidToken(): String? {
+        return try {
+            val now = System.currentTimeMillis()
+            if (cachedToken != null && now < tokenExpiration) {
+                return cachedToken
+            }
 
-    fun registerUser(
-        userData: UserData,
-        onResult: (AuthState) -> Unit
+            val firebaseUser = firebaseClient.auth.currentUser
+            val tokenResult = firebaseUser?.getIdToken(true)?.await()
+
+            tokenResult?.let {
+                cachedToken = "Bearer ${it.token}"
+                tokenExpiration = now + (it.expirationTimestamp - it.authTimestamp) * 1000 - 30000 // 30s de margem
+            }
+
+            cachedToken
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Failed to get token", e)
+            null
+        }
+    }
+
+    fun registerUser(userData: UserData, onResult: (AuthState) -> Unit
     ) {
         // Validações
         if (userData.email.isBlank() || userData.password.isBlank() ||
@@ -59,44 +82,58 @@ class AuthRepository @Inject constructor(
         firebaseClient.auth.createUserWithEmailAndPassword(userData.email, userData.password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val firebaseUser = task.result?.user!!
-                    val userId = firebaseUser.uid // 🔑 ID crítico para salvar localmente
+                    val firebaseUser = task.result?.user ?: run {
+                        onResult(AuthState.Error("Firebase user is null"))
+                        return@addOnCompleteListener
+                    }
 
-                    // Obter token JWT
-                    firebaseUser.getIdToken(false).addOnCompleteListener { tokenTask ->
-                        val idToken = "Bearer ${tokenTask.result?.token}"
-                        Log.d("FIREBASE_TOKEN", "Token: $idToken")
-
-                        // Sincronizar com Spring Boot
-                        apiService.syncUser(idToken, FirebaseUserSyncRequest(nombreUser = userData.nombreUser,
-                            email = userData.email,
-                            genero = userData.genero))
-                        .enqueue(object : Callback<UserResponseDTO> {
-                        override fun onResponse(call: Call<UserResponseDTO>, response: Response<UserResponseDTO>) {
-                            Log.d("SYNC_RESPONSE", "Code: ${response.code()}, Message: ${response.message()}") // ✅ Log da resposta
-                            if (response.isSuccessful) {
-                                // ✅ Armazene o userId do Firebase localmente
-                                preferencesManager.saveUserId(userId)
-                                onResult(AuthState.Authenticated)
-                            } else {
-                                Log.e("SYNC_ERROR", "Body: ${response.errorBody()?.string()}")
+                    // Forçar atualização do token
+                    firebaseUser.getIdToken(true).addOnCompleteListener { tokenTask ->
+                        if (tokenTask.isSuccessful) {
+                            val token = "Bearer ${tokenTask.result?.token ?: run {
                                 firebaseUser.delete()
-                                onResult(AuthState.Error("Sync failed: ${response.code()}"))
-                            }
+                                onResult(AuthState.Error("Token is null"))
+                                return@addOnCompleteListener
+                            }}"
+
+                            // Log para debug
+                            Log.d("AuthRepository", "Firebase UID: ${firebaseUser.uid}")
+                            Log.d("AuthRepository", "Token: ${token.take(20)}...")
+
+                            apiService.syncUser(token, FirebaseUserSyncRequest(
+                                nombreUser = userData.nombreUser,
+                                email = userData.email,
+                                genero = userData.genero
+                            )).enqueue(object : Callback<UserResponseDTO> {
+                                override fun onResponse(call: Call<UserResponseDTO>, response: Response<UserResponseDTO>) {
+                                    if (response.isSuccessful) {
+                                        preferencesManager.saveUserId(firebaseUser.uid)
+                                        onResult(AuthState.Authenticated)
+                                    } else {
+                                        firebaseUser.delete()
+                                        val errorBody = response.errorBody()?.string() ?: "No error body"
+                                        Log.e("AuthRepository", "Sync failed: ${response.code()} - $errorBody")
+                                        onResult(AuthState.Error("Sync failed: ${response.code()}"))
+                                    }
+                                }
+
+                                override fun onFailure(call: Call<UserResponseDTO>, t: Throwable) {
+                                    firebaseUser.delete()
+                                    Log.e("AuthRepository", "Network error", t)
+                                    onResult(AuthState.Error("Network error: ${t.message}"))
+                                }
+                            })
+                        } else {
+                            firebaseUser.delete()
+                            Log.e("AuthRepository", "Token error", tokenTask.exception)
+                            onResult(AuthState.Error("Token error: ${tokenTask.exception?.message}"))
                         }
-                            override fun onFailure(call: Call<UserResponseDTO>, t: Throwable) {
-                                Log.e("SYNC_FAILURE", "Exception: ${t.message}") // ✅ Log de falha na requisição
-                                firebaseUser.delete()
-                                onResult(AuthState.Error("Sync error: ${t.message}"))
-                            }
-                        })
                     }
                 } else {
-                    onResult(AuthState.Error(task.exception?.message ?: "Error en Firebase"))
+                    onResult(AuthState.Error(task.exception?.message ?: "Firebase error"))
                 }
             }
     }
-
 
     // --- LOGIN ---
     fun login(email: String, password: String, onResult: (AuthState) -> Unit) {

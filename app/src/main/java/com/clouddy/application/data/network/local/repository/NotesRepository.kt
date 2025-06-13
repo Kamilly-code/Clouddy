@@ -31,7 +31,14 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
     suspend fun insert(note: Note, userId: String) = withContext(Dispatchers.IO) {
         val noteWithUser = note.copy(userId = userId)
-        noteDao.insertNewNote(noteWithUser)
+        return@withContext try {
+            val id = noteDao.insertNewNote(noteWithUser)
+            Log.d("NotesRepository", "Nota inserida localmente com ID = $id")
+            id
+        } catch (e: Exception) {
+            Log.e("NotesRepository", "Erro ao inserir no Room: ${e.message}")
+            -1L
+        }
     }
 
     suspend fun update(note: Note) = withContext(Dispatchers.IO) {
@@ -43,35 +50,6 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
     }
 
     fun getNotesByDate(date: String, userId: String): Flow<List<Note>> =  noteDao.getNotesByDate(date, userId)
-
-
-    // Métodos auxiliares para manejar NoteItem en el ViewModel
-    suspend fun insertNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
-        val token = getAuthToken() ?: return@withContext
-        val userId = preferencesManager.getUserId() ?: throw Exception("User not authenticated")
-        val localId = noteDao.insertNewNote(note.copy(isSynced = false))
-
-        try {
-            val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId, date = note.date)
-            val response = api.insertNote(dto,token)
-
-            if (response.isSuccessful) {
-                response.body()?.let { savedNote ->
-                    val updated = note.copy(
-                        id = localId,
-                        remoteId = savedNote.remoteId,
-                        userId = userId,
-                        isSynced = true
-                    )
-                    noteDao.updateNote(updated)
-                }
-            } else {
-                Log.e("API", "Erro ao salvar nota no backend: ${response.message()}")
-            }
-        } catch (e: Exception) {
-            Log.e("API", "Erro ao conectar com servidor: ${e.message}")
-        }
-    }
 
     private suspend fun getAuthToken(): String? {
         return try {
@@ -85,11 +63,52 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
     }
 
 
+    // Métodos auxiliares para manejar NoteItem en el ViewModel
+    suspend fun insertNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext
+        val userId = preferencesManager.getUserId() ?: return@withContext
+        val localId = noteDao.insertNewNote(note.copy(isSynced = false))
+
+        try {
+
+            val dto = NoteRequestDto(
+                note.title.orEmpty(),
+                note.note.orEmpty(),
+                "",
+                userId,
+                date = note.date)
+            val response = api.insertNote(dto,token)
+
+            if (response.isSuccessful) {
+                response.body()?.let { remote ->
+                    val updated = note.copy(
+                        id = localId,
+                        remoteId = remote.remoteId,
+                        isSynced = true,
+                        userId = userId
+
+                    )
+                    noteDao.updateNote(updated)
+                    Log.d("NotesRepository", "Nota sincronizada com o servidor")
+                }
+            } else {
+                Log.e("API", "Erro ao salvar nota no backend: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Log.e("API", "Erro ao conectar com servidor: ${e.message}")
+        }
+    }
+
+
+
     suspend fun updateNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         val token = getAuthToken() ?: return@withContext
         val userId = preferencesManager.getUserId() ?: return@withContext
         val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId ?: "", userId, date = note.date)
-        if (note.id == null) return@withContext
+        if (note.id == null) {
+            Log.e("NotesRepository", "Nota inválida para update: ID local é nulo.")
+            return@withContext
+        }
 
         try {
             if (!note.remoteId.isNullOrEmpty()) {
@@ -112,9 +131,11 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
 
     suspend fun deleteNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
+        val userId = preferencesManager.getUserId() ?: return@withContext
+
         try {
             val token = getAuthToken() ?: return@withContext
-            if (note.remoteId != null && note.remoteId.isNotEmpty()) {
+            if (!note.remoteId.isNullOrEmpty()) {
                 val response = api.deleteNote(note.remoteId, token)
                 if (response.isSuccessful) {
                     noteDao.delete(note)
@@ -135,7 +156,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
     suspend fun isBackendAvailable(): Boolean = withContext(Dispatchers.IO) {
         try {
-            val url = URL("https://crud-production-d19c.up.railway.app/ping")
+            val url = URL("https://crud-production-60e8.up.railway.app/ping")
             val connection = url.openConnection() as HttpURLConnection
             connection.connectTimeout = 1000
             connection.readTimeout = 1000
@@ -148,8 +169,8 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
     }
 
     suspend fun syncNotesWithServer(userId: String) = withContext(Dispatchers.IO) {
-        // 1. Sincronizar notas que foram criadas offline (sem remoteId)
-        val unsyncedNotes = noteDao.getUnsyncedNotes(userId).filter { !it.isDeleted && it.userId == userId }
+        val userId = preferencesManager.getUserId() ?: return@withContext
+        val unsyncedNotes = noteDao.getUnsyncedNotes(userId).filter { !it.isDeleted && it.userId == userId && (it.remoteId.isNullOrEmpty()) }
 
         for (note in unsyncedNotes) {
             try {
@@ -161,7 +182,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
                     if (response.isSuccessful) {
                         response.body()?.let { serverNote ->
                             val syncedNote = note.copy(
-                                remoteId = serverNote.id.toString(),
+                                remoteId = serverNote.remoteId,
                                 isSynced = true,
                                 isUpdated = false
                             )
@@ -199,7 +220,7 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
         }
 
         // 3. Sincronizar notas deletadas offline
-        val deletedNotes = noteDao.getDeletedNotes(userId)
+        val deletedNotes = noteDao.getDeletedNotes(userId).filter { !it.remoteId.isNullOrEmpty() }
 
         for (note in deletedNotes) {
             try {

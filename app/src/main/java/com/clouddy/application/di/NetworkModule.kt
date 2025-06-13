@@ -30,7 +30,7 @@ object NetworkModule {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("https://crud-production-d19c.up.railway.app/")
+            .baseUrl("https://crud-production-60e8.up.railway.app/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
