@@ -31,4 +31,11 @@ interface PomodoroDao {
     @Query("SELECT * FROM pomodoro_table WHERE userId = :userId")
     fun getAllPomodoro(userId: String): Flow<List<Pomodoro>>
 
+    @Query("SELECT * FROM pomodoro_table WHERE remoteId = :remoteId AND userId = :userId LIMIT 1")
+    suspend fun getPomodoroByRemoteId(remoteId: String, userId: String): Pomodoro?
+
+    @Update
+    suspend fun updatePomodoroByRemoteId(pomodoro: Pomodoro)
+
+
 }

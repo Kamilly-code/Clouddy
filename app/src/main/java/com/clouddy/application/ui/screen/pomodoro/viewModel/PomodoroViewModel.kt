@@ -20,6 +20,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
+import java.util.UUID
 
 @HiltViewModel
 class PomodoroViewModel @Inject constructor(
@@ -95,16 +96,20 @@ class PomodoroViewModel @Inject constructor(
             }
           // val current = repository.getPomodoroSettings(userId).firstOrNull()
 
+            val existing = repository.getPomodoroSettings(userId).firstOrNull()
+
             val updatedPomodoro = Pomodoro(
-                id = 1,
+                id = existing?.id ?: 0,
+                remoteId = existing?.remoteId ?: UUID.randomUUID().toString(), // ✅ mantem ou gera remoteId
                 focusTime = focusTime,
                 shortBreakTime = shortBreakTime,
                 longBreakTime = longBreakTime,
                 rounds = rounds,
-                totalMinutes =  0,
+                totalMinutes = 0,
                 currentState = PomodoroState.IDLE,
                 currentRound = 0,
-                userId = userId
+                userId = userId,
+                lastUpdatedDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
             )
 
             repository.insertPomodoro(updatedPomodoro)

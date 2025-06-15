@@ -46,10 +46,12 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao,
     suspend fun insertTaskRemoteAndLocal(task: Task, userId: String) = withContext(Dispatchers.IO) {
         val token = getAuthToken() ?: return@withContext
         val userId = preferencesManager.getUserId() ?: return@withContext
-        val localId = taskDao.insertNewTask(task.copy(isSynced = false))
+        val generatedRemoteId = task.remoteId ?: UUID.randomUUID().toString()
+
+        val localId = taskDao.insertNewTask(task.copy(remoteId = generatedRemoteId, isSynced = false))
 
         try {
-            val dto = TaskRequestDto(task.task, task.isCompleted, "", userId, date = task.date)
+            val dto = TaskRequestDto(task.task, task.isCompleted, generatedRemoteId, userId, date = task.date)
             val response = api.insertTask(dto, token)
 
             if (response.isSuccessful) {
@@ -165,7 +167,7 @@ class TaskRepository @Inject constructor(private val taskDao: TaskDao,
                 if (response.isSuccessful) {
                     response.body()?.let { serverTask ->
                         val syncedTask = task.copy(
-                            remoteId = serverTask.remoteId, // Usar o remoteId do servidor
+                            remoteId = serverTask.remoteId,
                             isSynced = true,
                             isUpdated = false
                         )

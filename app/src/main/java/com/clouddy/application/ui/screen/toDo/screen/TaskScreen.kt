@@ -74,6 +74,7 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import kotlin.text.format
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -282,7 +283,7 @@ fun TaskScreen(navigateToNotesScreen: (() -> Unit)? = null){
                                         if (newTaskText.isNotBlank()) {
                                             val task = Task(
                                                 id = null,
-                                                remoteId = null,
+                                                remoteId = UUID.randomUUID().toString(),
                                                 task = newTaskText,
                                                 date = selectedDate, // Usando a data selecionada
                                                 isCompleted = false,

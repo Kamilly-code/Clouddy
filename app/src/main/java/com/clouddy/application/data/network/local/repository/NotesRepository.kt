@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 @ViewModelScoped
 class NotesRepository @Inject constructor(private val noteDao: NoteDao,
@@ -66,65 +67,64 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
     // Métodos auxiliares para manejar NoteItem en el ViewModel
     suspend fun insertNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         val token = getAuthToken() ?: return@withContext
-        val userId = preferencesManager.getUserId() ?: return@withContext
-        val localId = noteDao.insertNewNote(note.copy(isSynced = false))
+
+        val generatedRemoteId = note.remoteId ?: UUID.randomUUID().toString()
+        val noteWithRemoteId = note.copy(remoteId = generatedRemoteId, isSynced = false,userId = userId)
+
+        val localId = noteDao.insertNewNote(noteWithRemoteId)
 
         try {
-
             val dto = NoteRequestDto(
-                note.title.orEmpty(),
-                note.note.orEmpty(),
-                "",
-                userId,
-                date = note.date)
-            val response = api.insertNote(dto,token)
+                title = note.title.orEmpty(),
+                note = note.note.orEmpty(),
+                remoteId = generatedRemoteId,
+                userId = userId,
+                date = note.date
+            )
+
+            val response = api.insertNote(dto, token)
 
             if (response.isSuccessful) {
-                response.body()?.let { remote ->
-                    val updated = note.copy(
-                        id = localId,
-                        remoteId = remote.remoteId,
-                        isSynced = true,
-                        userId = userId
-
-                    )
-                    noteDao.updateNote(updated)
-                    Log.d("NotesRepository", "Nota sincronizada com o servidor")
-                }
+                val updatedNote = noteWithRemoteId.copy(
+                    id = localId,
+                    isSynced = true
+                )
+                noteDao.updateNote(updatedNote)
+                Log.d("NotesRepository", "Nota sincronizada com sucesso")
             } else {
                 Log.e("API", "Erro ao salvar nota no backend: ${response.message()}")
             }
         } catch (e: Exception) {
-            Log.e("API", "Erro ao conectar com servidor: ${e.message}")
+            Log.e("API", "Erro ao conectar com o servidor: ${e.message}")
         }
     }
 
-
-
     suspend fun updateNoteRemoteAndLocal(note: Note, userId: String) = withContext(Dispatchers.IO) {
         val token = getAuthToken() ?: return@withContext
-        val userId = preferencesManager.getUserId() ?: return@withContext
-        val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId ?: "", userId, date = note.date)
-        if (note.id == null) {
-            Log.e("NotesRepository", "Nota inválida para update: ID local é nulo.")
+
+        if (note.remoteId.isNullOrEmpty()) {
+            Log.e("NoteSync", "Erro: nota sem remoteId não pode ser atualizada.")
             return@withContext
         }
 
         try {
-            if (!note.remoteId.isNullOrEmpty()) {
-                val dto = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), note.remoteId!!, userId = note.userId, date = note.date)
-                val response = api.updateNote(note.remoteId, dto,token)
+            val dto = NoteRequestDto(
+                title = note.title.orEmpty(),
+                note = note.note.orEmpty(),
+                remoteId = note.remoteId,
+                userId = userId,
+                date = note.date
+            )
 
-                if (response.isSuccessful) {
-                    noteDao.updateNote(note.copy(isSynced = true, isUpdated = false))
-                } else {
-                    noteDao.updateNote(note.copy(isSynced = false, isUpdated = true))
-                }
+            val response = api.updateNote(note.remoteId, dto, token)
+
+            if (response.isSuccessful) {
+                noteDao.updateNote(note.copy(isSynced = true, isUpdated = false))
             } else {
                 noteDao.updateNote(note.copy(isSynced = false, isUpdated = true))
             }
         } catch (e: Exception) {
-            Log.e("API", "Erro ao atualizar: ${e.message}")
+            Log.e("API", "Erro ao atualizar nota remota: ${e.message}")
             noteDao.updateNote(note.copy(isSynced = false, isUpdated = true))
         }
     }
@@ -170,32 +170,36 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
     suspend fun syncNotesWithServer(userId: String) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
-        val unsyncedNotes = noteDao.getUnsyncedNotes(userId).filter { !it.isDeleted && it.userId == userId && (it.remoteId.isNullOrEmpty()) }
+        val unsyncedNotes = noteDao.getUnsyncedNotes(userId)
+            .filter { !it.isDeleted && (it.remoteId.isNullOrEmpty() || !it.isSynced) }
 
         for (note in unsyncedNotes) {
             try {
-                if (note.remoteId.isNullOrEmpty()) {
-                    // Criar nova nota no servidor
-                    val request = NoteRequestDto(note.title.orEmpty(), note.note.orEmpty(), "", userId, date = note.date)
-                    val response = api.insertNote(request, getAuthToken() ?: "")
-
-                    if (response.isSuccessful) {
-                        response.body()?.let { serverNote ->
-                            val syncedNote = note.copy(
-                                remoteId = serverNote.remoteId,
-                                isSynced = true,
-                                isUpdated = false
-                            )
-                            noteDao.updateNote(syncedNote)
-                        }
-                    } else {
-                        Log.e("Sync", "Erro ao criar nota: ${response.message()}")
+                val request = NoteRequestDto(
+                    note.title.orEmpty(),
+                    note.note.orEmpty(),
+                    "",
+                    userId,
+                    date = note.date
+                )
+                val response = api.insertNote(request, getAuthToken() ?: "")
+                if (response.isSuccessful) {
+                    response.body()?.let { serverNote ->
+                        val syncedNote = note.copy(
+                            remoteId = serverNote.remoteId,
+                            isSynced = true,
+                            isUpdated = false
+                        )
+                        noteDao.updateNote(syncedNote)
                     }
+                } else {
+                    Log.e("Sync", "Erro ao criar nota: ${response.message()}")
                 }
             } catch (e: Exception) {
                 Log.e("Sync", "Falha ao criar nota (id=${note.id}): ${e.message}")
             }
         }
+
 
         // 2. Sincronizar notas editadas offline
         val updatedNotes = noteDao.getUpdatedNotes(userId).filter { !it.remoteId.isNullOrEmpty() && !it.isDeleted }
@@ -224,18 +228,13 @@ class NotesRepository @Inject constructor(private val noteDao: NoteDao,
 
         for (note in deletedNotes) {
             try {
-                if (!note.remoteId.isNullOrEmpty()) {
                     val response = api.deleteNote(note.remoteId!!, getAuthToken() ?: "")
                     if (response.isSuccessful) {
                         noteDao.delete(note)
                     } else {
                         Log.e("Sync", "Erro ao deletar no servidor: ${response.message()}")
-                    }
-                } else {
-                    // Nota nunca foi sincronizada: deletar direto
-                    noteDao.delete(note)
-                }
-            } catch (e: Exception) {
+
+            } }catch (e: Exception) {
                 Log.e("Sync", "Falha ao deletar nota (id=${note.id}): ${e.message}")
             }
         }

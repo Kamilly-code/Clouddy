@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -47,6 +48,10 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
             loadTasks(userId)
             checkAndSyncBackend(userId)
         }
+    }
+
+    fun reloadTasks() {
+        currentUserId.value?.let { loadTasks(it) }
     }
 
     private fun getUserId(): String? {
@@ -89,7 +94,7 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
     fun addTask(task: Task) = viewModelScope.launch {
         currentUserId.value?.let { userId ->
             val taskWithUser = task.copy(
-                remoteId = null,
+                remoteId = task.remoteId ?: UUID.randomUUID().toString(),
                 isSynced = false,
                 userId = userId
             )
@@ -155,11 +160,11 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
                 } else {
                     repository.updateTaskRemoteAndLocal(updatedTask, userId)
                 }
+
+                reloadTasks()
             }
         }
     }
-
-
 
 
     fun checkAndSyncBackend(userId: String) {
@@ -198,14 +203,6 @@ class TaskViewModel @Inject constructor(private val repository : TaskRepository,
     }
 
     fun syncNotesIfNeeded() {
-        currentUserId.value?.let { userId ->
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.syncTasksWithServer(userId)
-            }
-        }
-    }
-
-    fun syncNotesWithServer() {
         currentUserId.value?.let { userId ->
             viewModelScope.launch(Dispatchers.IO) {
                 repository.syncTasksWithServer(userId)

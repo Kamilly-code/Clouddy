@@ -58,6 +58,7 @@ import com.example.clouddy.ui.theme.ClouddyTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,7 +141,7 @@ fun AddNote(
                             if (title.isNotBlank() && content.isNotBlank()) {
                                 val newNote = Note(
                                     id = noteToEdit?.id,
-                                    remoteId = noteToEdit?.remoteId ?: "",
+                                    remoteId = noteToEdit?.remoteId ?: UUID.randomUUID().toString(),
                                     title = title,
                                     note = content,
                                     date = selectedDate,

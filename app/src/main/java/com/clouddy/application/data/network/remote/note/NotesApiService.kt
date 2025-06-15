@@ -15,19 +15,22 @@ interface NotesApiService {
     suspend fun insertNote( @Body note: NoteRequestDto,
                             @Header("Authorization") token: String): Response<NoteItem>
 
-    @PUT("notes/{id}")
+    @PUT("notes/{remoteId}")
     suspend fun updateNote(
-        @Path("id") id: String,
+        @Path("remoteId") remoteId: String,
         @Body noteRequestDTO: NoteRequestDto,
         @Header("Authorization") token: String
     ): Response<NoteItem>
 
+
     @GET("/notes")
     suspend fun getAllNotes(): Response<List<NoteItem>>
 
-    @DELETE("/notes/{id}")
-    suspend fun deleteNote(@Path("id") id: String,
-                           @Header("Authorization") token: String): Response<Void>
+    @DELETE("/notes/{remoteId}")
+    suspend fun deleteNote(
+        @Path("remoteId") remoteId: String,
+        @Header("Authorization") token: String
+    ): Response<Void>
 
     @DELETE("/notes")
     suspend fun deleteAll(): Response<Void>

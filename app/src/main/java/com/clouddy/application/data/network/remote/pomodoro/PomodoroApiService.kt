@@ -19,9 +19,9 @@ interface PomodoroApiService {
     suspend fun insertPomodoro(@Body request: PomodoroRequestDto,
                                @Header("Authorization") token: String): PomodoroResponseDto
 
-    @PUT("/pomodoros/{id}")
+    @PUT("/pomodoros/{remoteId}")
     suspend fun updatePomodoro(
-        @Path("id") id: Long,
+        @Path("remoteId") remoteId: String,
         @Body request: PomodoroRequestDto,
         @Header("Authorization") token: String
     ): PomodoroResponseDto

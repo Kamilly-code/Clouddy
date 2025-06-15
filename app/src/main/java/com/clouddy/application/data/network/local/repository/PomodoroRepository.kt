@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 @Singleton
 class PomodoroRepository @Inject constructor(
@@ -46,9 +47,14 @@ class PomodoroRepository @Inject constructor(
 
     suspend fun insertPomodoro(pomodoro: Pomodoro) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
+        val safeRemoteId = pomodoro.remoteId ?: UUID.randomUUID().toString()
+
+        val pomodoroWithId = pomodoro.copy(userId = userId, remoteId = safeRemoteId)
+
+
         try {
-            val authToken = getAuthToken()
-            val request = PomodoroMapper.toRequest(pomodoro.copy(userId = userId))
+            val authToken = getAuthToken() ?: throw Exception("Not authenticated")
+            val request = PomodoroMapper.toRequest((pomodoroWithId))
             val response = if (authToken != null) {
                 api.insertPomodoro(request, authToken) // Assumindo que a API não requer auth para inserção
             } else {
@@ -60,10 +66,10 @@ class PomodoroRepository @Inject constructor(
             Log.w("PomodoroRepository", "POST falhou, tentando update: ${e.message}")
 
             try {
-                val authToken = getAuthToken()
-                val request = PomodoroMapper.toRequest(pomodoro)
+                val authToken = getAuthToken() ?: throw Exception("Not authenticated")
+                val request = PomodoroMapper.toRequest(pomodoroWithId)
                 val response = if (authToken != null) {
-                    api.updatePomodoro(pomodoro.id, request, authToken) // Assumindo que a API não requer auth para inserção
+                    api.updatePomodoro(safeRemoteId, request, authToken) // Assumindo que a API não requer auth para inserção
                 } else {
                     throw Exception("Not authenticated")
                 }
@@ -71,7 +77,7 @@ class PomodoroRepository @Inject constructor(
                 pomodoroDao.insertPomodoro(updated)
             } catch (e: Exception) {
                 Log.e("PomodoroRepository", "Update falhou também: ${e.message}")
-                pomodoroDao.insertPomodoro(pomodoro)
+                pomodoroDao.insertPomodoro(pomodoroWithId)
             }
         }
     }
@@ -87,15 +93,18 @@ class PomodoroRepository @Inject constructor(
 
     suspend fun updatePomodoro(pomodoro: Pomodoro) = withContext(Dispatchers.IO) {
         val userId = preferencesManager.getUserId() ?: return@withContext
+        val remoteId = pomodoro.remoteId ?: UUID.randomUUID().toString()
+        val pomodoroWithId = pomodoro.copy(userId = userId, remoteId = remoteId)
+
         try {
             val authToken = getAuthToken() ?: throw Exception("Not authenticated")
-            val request = PomodoroMapper.toRequest(pomodoro.copy(userId = userId))
-            val response = api.updatePomodoro(pomodoro.id ?: 0L, request, authToken)
+            val request = PomodoroMapper.toRequest(pomodoroWithId)
+            val response = api.updatePomodoro(remoteId, request, authToken)
             val updated = PomodoroMapper.fromResponse(response)
             pomodoroDao.updatePomodoro(updated)
         } catch (e: Exception) {
             Log.e("PomodoroRepository", "Update failed, saving locally", e)
-            pomodoroDao.updatePomodoro(pomodoro)
+            pomodoroDao.updatePomodoro(pomodoroWithId)
         }
     }
 

@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import kotlin.text.format
 import kotlin.text.insert
 
@@ -59,11 +60,16 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
 
             loadNotes(userId)
             if (repository.isBackendAvailable()) {
-                syncNotesWithServer(userId)
+                syncNotesWithServer()
             }
         }
     }
 
+
+    fun formatDate(date: LocalDate): String {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        return date.format(formatter)
+    }
 
         private fun getUserId(): String? {
         val userId = preferencesManager.getUserId()
@@ -93,38 +99,34 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
         }
     }
 
-
-
-    fun formatDate(date: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        return date.format(formatter)
-    }
-
-    fun insert(note: Note) = viewModelScope.launch {
-        val userId = currentUserId.value
-        if (userId.isNullOrEmpty()) {
-            Log.e("INSERT", "Tentativa de inserir nota sem usuário autenticado")
-            return@launch
-        }
-
+    fun insert(note: Note)= viewModelScope.launch {
+        val userId = currentUserId.value ?: return@launch
         val formattedDate = formatDate(LocalDate.now())
+
         val noteWithUser = note.copy(
             date = formattedDate,
             userId = userId,
             isSynced = false,
-            remoteId = null
+            remoteId = note.remoteId ?: UUID.randomUUID().toString()
         )
 
-        val isOnline = repository.isBackendAvailable()
+        try {
+            val isOnline = repository.isBackendAvailable()
 
-        if (isOnline) {
-            Log.d("INSERT", "Online: tentando inserir local e remoto")
-            repository.insertNoteRemoteAndLocal(noteWithUser, userId)
-        } else {
-            Log.d("INSERT", "Offline: salvando localmente")
-            repository.insert(noteWithUser, userId)
-            // Opcional: forçar sincronização depois
-            repository.syncNotesWithServer(userId)
+            if (isOnline) {
+                Log.d("INSERT", "Online: tentando inserir local e remoto")
+                repository.insertNoteRemoteAndLocal(noteWithUser, userId)
+            } else {
+                Log.d("INSERT", "Offline: salvando localmente")
+                repository.insert(noteWithUser, userId)
+                repository.syncNotesWithServer(userId)
+            }
+
+            // ✅ Força atualização da lista de notas após insert
+            loadNotes(userId)
+
+        } catch (e: Exception) {
+            Log.e("NotesViewModel", "Erro ao inserir nota", e)
         }
     }
 
@@ -133,48 +135,46 @@ class NotesViewModel @Inject constructor(private val repository: NotesRepository
             try {
                 val userId = currentUserId.value ?: throw IllegalStateException("User not authenticated")
                 val noteWithUser = note.copy(userId = userId)
-                val isConnected = repository.isBackendAvailable()
-                if (isConnected) {
-                    if (note.remoteId.isNullOrEmpty()) {
-                        repository.insertNoteRemoteAndLocal(noteWithUser, userId)
-                        loadNotes(userId)
-                    } else {
-                        repository.updateNoteRemoteAndLocal(noteWithUser, userId)
-                        loadNotes(userId)
-                    }
+                val noteWithRemoteId = if (noteWithUser.remoteId.isNullOrEmpty()) {
+                    noteWithUser.copy(remoteId = UUID.randomUUID().toString())
                 } else {
-                    Log.d("NotesViewModel", "Nota já sincronizada")
-                    val localNote = if (note.remoteId.isNullOrEmpty()) {
-                        noteWithUser.copy(isSynced = false)
-                    } else {
-                        noteWithUser.copy(isUpdated = true, isSynced = false)
-                    }
-                    repository.insert(localNote, userId)
+                    noteWithUser
                 }
 
-                // FORÇAR atualização da lista após inserção/atualização
-                repository.getAllNotes(userId).collect { notes ->
-                    _notes.value = notes.map { it.toNoteItem() }
+                val isConnected = repository.isBackendAvailable()
+                if (isConnected) {
+                    repository.insertNoteRemoteAndLocal(noteWithRemoteId, userId)
+                } else {
+                    repository.insert(noteWithRemoteId.copy(isSynced = false), userId)
                 }
+
+                // ✅ Atualiza a lista após inserir ou editar
+                viewModelScope.launch {
+                    loadNotes(userId)
+                }
+
             } catch (e: Exception) {
                 Log.e("NotesViewModel", "Erro ao inserir/atualizar nota", e)
             }
         }
     }
-
-
 fun updateNote(note: Note, context: Context) {
-    viewModelScope.launch {
-        currentUserId.value?.let { userId ->
-        val noteWithUser = note.copy(userId =  userId)
-        if (note.remoteId == null) {
-            repository.insert(noteWithUser, userId)
-            Log.e("ViewModel", "Tentou atualizar nota sem remoteId. Inserindo local.")
-        } else {
-            repository.updateNoteRemoteAndLocal(noteWithUser, userId)
+    currentUserId.value?.let { userId ->
+        viewModelScope.launch {
+            try {
+                val noteWithUser = note.copy(userId = userId)
+                if (note.remoteId == null) {
+                    repository.insert(noteWithUser, userId)
+                    Log.e("ViewModel", "Tentou atualizar nota sem remoteId. Inserindo local.")
+                } else {
+                    repository.updateNoteRemoteAndLocal(noteWithUser, userId)
+                    loadNotes(userId)
+                }
+            } catch (e: Exception) {
+                Log.e("ViewModel", "Erro ao atualizar nota", e)
+            }
         }
     }
-}
 }
 
     fun deleteNote(note: Note, context: Context) {
@@ -183,10 +183,8 @@ fun updateNote(note: Note, context: Context) {
                 val noteWithUser = note.copy(userId = userId)
                 val networkUtils = NetworkUtils()
 
-                // Sempre deleta localmente primeiro
                 repository.delete(noteWithUser)
 
-                // Se tiver conexão e remoteId, tenta deletar no servidor
                 if (networkUtils.isConnected(context) && !note.remoteId.isNullOrEmpty()) {
                     try {
                         repository.deleteNoteRemoteAndLocal(noteWithUser, userId)
@@ -194,35 +192,37 @@ fun updateNote(note: Note, context: Context) {
                         Log.e("NotesViewModel", "Failed to delete note remotely", e)
                     }
                 }
+
+                // ✅ Atualiza a lista após deletar
+                loadNotes(userId)
             }
         }
     }
+
 
     fun syncNotesIfNeeded() {
-        viewModelScope.launch(Dispatchers.IO) {
-            currentUserId.value?.let { userId ->
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch {
                 repository.syncNotesWithServer(userId)
+                loadNotes(userId)
             }
         }
     }
 
-    fun syncNotesWithServer(userId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            currentUserId.value?.let { userId ->
+    fun syncNotesWithServer() {
+        currentUserId.value?.let { userId ->
+            viewModelScope.launch {
                 repository.syncNotesWithServer(userId)
+                loadNotes(userId)
             }
         }
+    }
 
-        fun formatDate(date: LocalDate): String {
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-            return date.format(formatter)
-        }
 
-        fun getNotesByDate(date: LocalDate): Flow<List<Note>> {
-            val formattedDate = formatDate(date)
-            return currentUserId.value?.let { userId ->
-                repository.getNotesByDate(formattedDate, userId)
-            } ?: flowOf(emptyList())
-        }
+    fun getNotesByDate(date: LocalDate): Flow<List<Note>> {
+        val formattedDate = formatDate(date)
+        return currentUserId.value?.let { userId ->
+            repository.getNotesByDate(formattedDate, userId)
+        } ?: flowOf(emptyList())
     }
 }

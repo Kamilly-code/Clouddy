@@ -31,6 +31,9 @@ interface NoteDao {
     suspend fun getUnsyncedNotes(userId: String): List<Note>
 
 
+    @Query("SELECT * FROM notes_table WHERE remoteId = :remoteId AND userId = :userId LIMIT 1")
+    suspend fun getNoteByRemoteId(remoteId: String, userId: String): Note?
+
     @Query("SELECT * FROM notes_table WHERE isDeleted = 1 AND userId = :userId")
     suspend fun getDeletedNotes(userId: String): List<Note>
 
